@@ -1,0 +1,22 @@
+wget https://dev.mysql.com/get/mysql-apt-config_0.8.15-1_all.deb
+dpkg -i mysql-apt-config_0.8.15-1_all.deb 
+apt-get update
+apt-get install mysql-server -y
+apt install python3-pip
+pip3 install django
+apt-get install python3-dev libmysqlclient-dev
+pip3 install mysqlclient
+python3 manage.py migrate
+python3 manage.py runserver 0.0.0.0:8000
+
+apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+apt-key fingerprint 0EBFCD88
+add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+apt-get update
+apt-get install -y docker-ce
+docker version
+apt-get install docker-compose
+docker-compose --version
+docker-compose build
+docker-compose up -d

@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Linq</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+<body>
+プレイヤー名：{{ round.player.name }}<br>
+スコア：{{ round.player.score }}<br>
+お題：{{ round.word }}<br>
+<table border>
+<tr><th>No.</th><th>名前</th><th>合計スコア</th><th>お題</th><th>ヒント１</th><th>ヒント２</th><th>投票１</th><th>投票２</th><th>今回スコア</th></tr>
+{% for r in round_all %}
+	<tr>
+	<td id="no_{{ forloop.counter }}">{{ r.order }}</td>
+	<td id="name_{{ forloop.counter }}">{{ r.player.name }}</td>
+	<td id="score_{{ forloop.counter }}">{{ r.player.score }}</td>
+	<td id="score_{{ forloop.counter }}">{{ r.word }}</td>
+	<td id="hint1_{{ forloop.counter }}">{{ r.hint1 }}</td>
+	<td id="hint2_{{ forloop.counter }}">{{ r.hint2 }}</td>
+	<td id="poll1_{{ forloop.counter }}">{{ r.poll11.player.name }}－{{ r.poll12.player.name }}</td>
+	<td id="poll2_{{ forloop.counter }}">{{ r.poll21.player.name }}－{{ r.poll22.player.name }}</td>
+	<td id="score_{{ forloop.counter }}">{{ r.score }}</td>
+	</tr>
+{% endfor %}
+</table>
+<a href="/linq/{{ round.player.id }}/{{ round_no|add:"1" }}/main">次のラウンド</a>
+</body>
+</html>

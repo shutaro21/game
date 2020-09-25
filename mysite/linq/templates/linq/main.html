@@ -1,0 +1,92 @@
+{% load static %}
+<!doctype html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Linq</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+<body>
+<script>
+$(function(){
+	check_result()
+	$('#enter_hint').on('click',function(e){
+		$.getJSON('/linq/{{ player.id }}/{{ round_no }}/hint', {'hint':$('#hint_text').val()}, function(res){
+			$('#hint_text').val("");
+			check_result();
+		})
+	})
+	$('#poll').on('click',function(e){
+		if($('input[name="poll_check"]:checked').length != 2){
+			alert("2人にチェックをしてください。");
+			return false;
+		}
+	    player1 = $('input[name="poll_check"]:checked')[0].value;
+	    player2 = $('input[name="poll_check"]:checked')[1].value;
+		$.getJSON('/linq/{{ player.id }}/{{ round_no }}/poll', {'player1':player1,'player2':player2}, function(res){
+			$('input[name="poll_check"]:checked').each(function() {
+				$(this).prop('checked', false);
+			})
+			check_result();
+		})
+	})
+})
+function check_result(){
+	$.getJSON('/linq/{{ player.id }}/{{ round_no }}/check', function(res){
+		console.log(res);
+		for (i = 0; i < res.players.length; i++){
+			$('#no_'+(i+1)).text(res.players[i].no);
+			$('#name_'+(i+1)).text(res.players[i].name);
+			$('#score_'+(i+1)).text(res.players[i].score);
+			$('#hint1_'+(i+1)).text(res.players[i].hint1);
+			$('#hint2_'+(i+1)).text(res.players[i].hint2);
+		}
+		if(res.status != 0){
+			$('#word').text(res.word);
+		}
+		if(res.status == 1){
+			$('#hint_area').show();
+		}else{
+			$('#hint_area').hide();
+		}
+		if(res.status == 3){
+			$('#poll_area').show();
+		}else{
+			$('#poll_area').hide();
+		}
+		if(res.status == 5){
+			window.location.href = "/linq/{{ player.id }}/{{ round_no }}/result";
+		}
+		if(res.status == 0 || res.status == 2 || res.status == 4){
+			setTimeout(check_result, 5 * 1000);
+		}
+	});
+}
+</script>
+プレイヤー名：{{ player.name }}<br>
+スコア：{{ player.score }}<br>
+お題：<span id='word'></span><br>
+<table border>
+<tr><th>No.</th><th>名前</th><th>スコア</th><th>ヒント１</th><th>ヒント２</th></tr>
+{% for i in player_cnt %}
+	<tr>
+	<td id="no_{{ forloop.counter }}"></td>
+	<td id="name_{{ forloop.counter }}"></td>
+	<td id="score_{{ forloop.counter }}"></td>
+	<td id="hint1_{{ forloop.counter }}"></td>
+	<td id="hint2_{{ forloop.counter }}"></td>
+	<td ><input type='checkbox' name="poll_check" value={{ forloop.counter }}></td>
+	</tr>
+{% endfor %}
+</table>
+<div id="hint_area">
+	ヒント：<input type="text" name="hint_text" maxlength="40" class="form-control" required id="hint_text">
+	<button id="enter_hint" type="submit">登録</button>
+</div>
+<div id="poll_area">
+	<button id="poll" type="submit">投票</button>
+</div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+	"settings": {
+		"http": {
+			"header_read_timeout": 10,
+			"body_read_timeout": 10,
+			"send_timeout": 10,
+			"idle_timeout": 120,
+			"max_body_size": 6291456,
+			"static": {
+				"mime_types": {
+					"text/plain": [
+						".log",
+						"README",
+						"CHANGES"
+					]
+				}
+			}
+		}
+	},
+	"listeners":{
+		"*:80":{
+			"pass":"routes"
+		}
+	},
+	"routes":[
+		{
+			"match":{
+				"uri":"/static/*"
+			},
+			"action":{
+				"share":"/home/django/static/"
+			}
+		},
+		{
+			"action":{
+				"pass":"applications/django"
+			}
+		}
+	],
+	"applications":{
+		"django":{
+			"type":"python",
+			"processes":2,
+			"path":"/home/django/mysite/",
+			"module":"mysite.wsgi"
+		}
+	},
+	"access_log":"/var/log/access.log"
+}
