@@ -58,6 +58,7 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
+local_setting.ini
 db.sqlite3
 db.sqlite3-journal
 
@@ -127,3 +128,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# VS Code
+.vs
+.vscode
