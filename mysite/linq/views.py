@@ -74,7 +74,21 @@ def check(request, player_id, round_no):
     poll21_cnt = 0
     # 返却用プレイヤー情報を作成。ヒント、投票の数を数える。
     for r in round_all:
-        res_players.append({'no':r.order,'name':r.player.name,'score':r.player.score,'hint1':r.hint1,'hint2':r.hint2})
+        if r.poll11:
+            if round == r:
+                poll1_str = r.poll11.player.name + '－' + r.poll12.player.name
+            else:
+                poll1_str = '投票済み'
+        else:
+            poll1_str = '未投票'
+        if r.poll21:
+            if round == r:
+                poll2_str = r.poll21.player.name + '－' + r.poll22.player.name
+            else:
+                poll2_str = '投票済み'
+        else:
+            poll2_str = '未投票'
+        res_players.append({'no':r.order,'name':r.player.name,'score':r.player.score,'hint1':r.hint1,'hint2':r.hint2,'poll1':poll1_str,'poll2':poll2_str})
         if r.hint1:
             hint1_cnt += 1 
         if r.hint2:
