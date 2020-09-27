@@ -188,7 +188,7 @@ def calc_score(game_id, round_no):
     # ラウンドIDをキーにしたワード辞書と的中辞書を作成
     for r in round_all:
         words[r.id] = r.word
-        hit_data[r.id] = {'self_hit':False,'other_hit':0,'ng_hit':0,'be_other_hit':0,'be_ng_hit':0}
+        hit_data[r.id] = {'poll1_result':0,'poll2_result':0,'self_hit':False,'other_hit':0,'ng_hit':0,'be_other_hit':0,'be_ng_hit':0}
     # ペアプレイヤーをDBに登録
     for r in round_all:
         pair_player = Round.objects.filter(game__id=game_id, round_no=round_no, word=r.word).exclude(player=r.player).first()
@@ -210,9 +210,11 @@ def calc_score(game_id, round_no):
             # 自分の分なら自ペア的中フラグを立てる
             if r in [r.poll11, r.poll12]:
                 hit_data[r.id]['self_hit'] = True
+                hit_data[r.id]['poll1_result'] = 1
             # 自分の分でないなら他ペア的中の数と投票先の被他ペア的中の数をインクリメント。
             else:
                 hit_data[r.id]['other_hit'] += 1
+                hit_data[r.id]['poll1_result'] = 2
                 hit_data[r.poll11.id]['be_other_hit'] += 1
                 hit_data[r.poll12.id]['be_other_hit'] += 1
         # 投票２があっていて
@@ -220,26 +222,34 @@ def calc_score(game_id, round_no):
             # 自分の分なら自ペア的中フラグを立てる
             if r in [r.poll21, r.poll22]:
                 hit_data[r.id]['self_hit'] = True
+                hit_data[r.id]['poll2_result'] = 1
             # 自分の分でないなら他ペア的中の数と投票先の被他ペア的中の数をインクリメント。
             else:
                 hit_data[r.id]['other_hit'] += 1
+                hit_data[r.id]['poll2_result'] = 2
                 hit_data[r.poll21.id]['be_other_hit'] += 1
                 hit_data[r.poll22.id]['be_other_hit'] += 1
         # 単独の人に投票していた場合はNG的中の数と投票先の被NG的中の数をインクリメント
         if word11 == '*':
             hit_data[r.id]['ng_hit'] += 1
+            hit_data[r.id]['poll1_result'] = 3
             hit_data[r.poll11.id]['be_ng_hit'] += 1
         if word12 == '*':
             hit_data[r.id]['ng_hit'] += 1
+            hit_data[r.id]['poll1_result'] = 3
             hit_data[r.poll12.id]['be_ng_hit'] += 1
         if word21 == '*':
             hit_data[r.id]['ng_hit'] += 1
+            hit_data[r.id]['poll2_result'] = 3
             hit_data[r.poll21.id]['be_ng_hit'] += 1
         if word22 == '*':
             hit_data[r.id]['ng_hit'] += 1
+            hit_data[r.id]['poll2_result'] = 3
             hit_data[r.poll22.id]['be_ng_hit'] += 1
     # 的中辞書データをDBに保存
     for r in round_all:
+        r.poll1_result = hit_data[r.id]['poll1_result']
+        r.poll2_result = hit_data[r.id]['poll2_result']
         r.self_hit = hit_data[r.id]['self_hit']
         r.other_hit = hit_data[r.id]['other_hit']
         r.ng_hit = hit_data[r.id]['ng_hit']
