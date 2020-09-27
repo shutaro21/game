@@ -13,6 +13,10 @@
 $(function(){
 	check_result()
 	$('#enter_hint').on('click',function(e){
+		if(!$('#hint_text').val().match(/^[ぁ-んー　]+$/)){
+			alert("ヒントはひらがなで入力してください。");
+			return false;
+		}
 		$.getJSON('/linq/{{ player.id }}/{{ round_no }}/hint', {'hint':$('#hint_text').val()}, function(res){
 			$('#hint_text').val("");
 			check_result();
