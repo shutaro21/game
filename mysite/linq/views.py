@@ -230,19 +230,19 @@ def calc_score(game_id, round_no):
                 hit_data[r.poll21.id]['be_other_hit'] += 1
                 hit_data[r.poll22.id]['be_other_hit'] += 1
         # 単独の人に投票していた場合はNG的中の数と投票先の被NG的中の数をインクリメント
-        if word11 == '*':
+        if word11 == '？':
             hit_data[r.id]['ng_hit'] += 1
             hit_data[r.id]['poll1_result'] = 3
             hit_data[r.poll11.id]['be_ng_hit'] += 1
-        if word12 == '*':
+        if word12 == '？':
             hit_data[r.id]['ng_hit'] += 1
             hit_data[r.id]['poll1_result'] = 3
             hit_data[r.poll12.id]['be_ng_hit'] += 1
-        if word21 == '*':
+        if word21 == '？':
             hit_data[r.id]['ng_hit'] += 1
             hit_data[r.id]['poll2_result'] = 3
             hit_data[r.poll21.id]['be_ng_hit'] += 1
-        if word22 == '*':
+        if word22 == '？':
             hit_data[r.id]['ng_hit'] += 1
             hit_data[r.id]['poll2_result'] = 3
             hit_data[r.poll22.id]['be_ng_hit'] += 1
@@ -293,16 +293,15 @@ def make_round(game_id, round_no):
     word_list = list(word)
     # シャッフルする
     random.shuffle(word_list)
-    # プレイヤー数を２で割って切り捨てた数の分、player配列に取得する
-    word_cnt = game.player_cnt // 2
+    # プレイヤー数－１を２で割って切り捨てた数の分、player配列に取得する
+    word_cnt = (game.player_cnt - 1) // 2
     player_word = []
     for i in range(word_cnt):
         player_word.append(word_list.pop().word)
     # 同じものをペア分として作成する
     player_word = player_word * 2
-    # 奇数の場合は「*」を追加する
-    if game.player_cnt % 2 == 1:
-        player_word = player_word + ['*']
+    # 奇数の場合は1人、偶数の場合は2人、「？」を追加する
+    player_word = player_word + ['？'] * (game.player_cnt - word_cnt * 2)
     # シャッフルする
     random.shuffle(player_word)
     # 各プレイヤーごとにラウンドデータを作成する
