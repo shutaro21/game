@@ -42,6 +42,8 @@ function check_result(){
 			$('#score_'+(i+1)).text(res.players[i].score);
 			$('#hint1_'+(i+1)).text(res.players[i].hint1);
 			$('#hint2_'+(i+1)).text(res.players[i].hint2);
+			$('#poll1_'+(i+1)).text(res.players[i].poll1);
+			$('#poll2_'+(i+1)).text(res.players[i].poll2);
 		}
 		if(res.status != 0){
 			$('#word').text(res.word);
@@ -69,7 +71,7 @@ function check_result(){
 スコア：{{ player.score }}<br>
 お題：<span id='word'></span><br>
 <table border>
-<tr><th>No.</th><th>名前</th><th>スコア</th><th>ヒント１</th><th>ヒント２</th></tr>
+<tr><th>No.</th><th>名前</th><th>スコア</th><th>ヒント１</th><th>ヒント２</th><th>投票１</th><th>投票２</th></tr>
 {% for i in player_cnt %}
 	<tr>
 	<td id="no_{{ forloop.counter }}"></td>
@@ -77,6 +79,8 @@ function check_result(){
 	<td id="score_{{ forloop.counter }}"></td>
 	<td id="hint1_{{ forloop.counter }}"></td>
 	<td id="hint2_{{ forloop.counter }}"></td>
+	<td id="poll1_{{ forloop.counter }}"></td>
+	<td id="poll2_{{ forloop.counter }}"></td>
 	<td ><input type='checkbox' name="poll_check" value={{ forloop.counter }}></td>
 	</tr>
 {% endfor %}
