@@ -25,6 +25,8 @@ class Round(models.Model):
     poll12 = models.ForeignKey('self', related_name='poll12_p', on_delete=models.CASCADE, null=True)
     poll21 = models.ForeignKey('self', related_name='poll21_p', on_delete=models.CASCADE, null=True)
     poll22 = models.ForeignKey('self', related_name='poll22_p', on_delete=models.CASCADE, null=True)
+    poll1_result = models.IntegerField('投票１結果', null=True)
+    poll2_result = models.IntegerField('投票２結果', null=True)
     score = models.IntegerField('スコア', null=True)
     pair_player = models.ForeignKey('self', related_name='pair_player_p', on_delete=models.CASCADE, null=True)
     self_hit = models.BooleanField('自ペア的中', null=True)

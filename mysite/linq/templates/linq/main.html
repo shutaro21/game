@@ -61,7 +61,7 @@ function check_result(){
 		if(res.status == 5){
 			window.location.href = "/linq/{{ player.id }}/{{ round_no }}/result";
 		}
-		if(res.status == 0 || res.status == 2 || res.status == 4){
+		if(res.status == 0 || res.status == 2 || res.status == 3 || res.status == 4){
 			setTimeout(check_result, 5 * 1000);
 		}
 	});

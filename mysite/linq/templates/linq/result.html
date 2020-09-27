@@ -7,6 +7,12 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Linq</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <style>
+        .poll_1 {background-color: #ccf;}
+        .poll_2 {background-color: #cfc;}
+        .poll_3 {background-color: #fcc;}
+        }
+    </style>
 </head>
 <body>
 プレイヤー名：{{ round.player.name }}<br>
@@ -22,8 +28,8 @@
 	<td id="score_{{ forloop.counter }}">{{ r.word }}</td>
 	<td id="hint1_{{ forloop.counter }}">{{ r.hint1 }}</td>
 	<td id="hint2_{{ forloop.counter }}">{{ r.hint2 }}</td>
-	<td id="poll1_{{ forloop.counter }}">{{ r.poll11.player.name }}－{{ r.poll12.player.name }}</td>
-	<td id="poll2_{{ forloop.counter }}">{{ r.poll21.player.name }}－{{ r.poll22.player.name }}</td>
+	<td id="poll1_{{ forloop.counter }}" class=poll_{{ r.poll1_result }}>{{ r.poll11.player.name }}－{{ r.poll12.player.name }}</td>
+	<td id="poll2_{{ forloop.counter }}" class=poll_{{ r.poll2_result }}>{{ r.poll21.player.name }}－{{ r.poll22.player.name }}</td>
 	<td id="score_{{ forloop.counter }}">{{ r.score }}</td>
 	</tr>
 {% endfor %}
