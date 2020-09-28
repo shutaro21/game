@@ -22,7 +22,7 @@ def create_game(request):
 # エントリー画面
 def entry(request, game_id):
     game = get_object_or_404(Game, pk=game_id)
-    return render(request, 'linq/entry.html', {'game': game,})
+    return render(request, 'linq/entry.html', {'game': game, 'player_cnt':range(game.player_cnt)})
 
 # エントリー処理
 def entry_player(request, game_id):
@@ -43,6 +43,21 @@ def entry_player(request, game_id):
         make_round(game_id, 1)
     # メイン画面に遷移する
     return HttpResponseRedirect(reverse('linq:main', args=(player.id, 1)))
+
+# エントリー状況チェエック処理
+def check_entry(request, game_id):
+    response = {}
+    res_players = []
+    game = get_object_or_404(Game, pk=game_id)
+    current_round = Round.objects.filter(game__id=game_id).aggregate(Max('round_no'))['round_no__max']
+    if not current_round:
+        current_round = 1
+    players = Player.objects.filter(game=game).order_by('id')
+    for p in players:
+        res_players.append({'id':p.id, 'name':p.name, 'url':reverse('linq:main', args=(p.id, current_round)),})
+    response['current_round'] = current_round
+    response['players'] = res_players
+    return HttpResponse(json.dumps(response))
 
 # メイン画面
 def main(request, player_id, round_no):

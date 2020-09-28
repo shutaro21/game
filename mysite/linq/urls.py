@@ -10,6 +10,7 @@ urlpatterns = [
     path('<int:player_id>/<int:round_no>/result', views.result, name='result'),
     path('create_game', views.create_game, name='create_game'),
     path('<int:game_id>/entry_player', views.entry_player, name='entry_player'),
+    path('<int:game_id>/check_entry/', views.check_entry, name='check_entry'),
     path('<int:player_id>/<int:round_no>/check', views.check, name='check'),
     path('<int:player_id>/<int:round_no>/hint', views.hint, name='hint'),
     path('<int:player_id>/<int:round_no>/poll', views.poll, name='poll'),
