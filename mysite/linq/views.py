@@ -81,6 +81,10 @@ def check(request, player_id, round_no):
             res_players.append({'no':'*','name':p.name,'score':p.score,'hint1':'','hint2':''})
         response['players'] = res_players
         return HttpResponse(json.dumps(response))
+    # 投票１があればその情報を並び順で返す
+    if round.poll11:
+        response['poll11'] = round.poll11.order
+        response['poll12'] = round.poll12.order
     # 他プレイヤーも含めたラウンドデータを取得
     round_all = Round.objects.filter(game=round.game, round_no=round_no).order_by('order')
     hint1_cnt = 0
