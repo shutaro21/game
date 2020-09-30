@@ -1,0 +1,69 @@
+body{
+    font-family: 'Kosugi', sans-serif;
+}
+table{
+    border-collapse:separate;
+    border-spacing: 0;
+}
+table th:first-child{
+    border-radius: 5px 0 0 0;
+}
+table th:last-child{
+    border-radius: 0 5px 0 0;
+    border-right: 1px solid #3c6690;
+}
+table tr{
+    box-shadow: 0px -3px 5px 1px #eee inset;
+    background:#fff;
+}
+table th{
+    color:white;
+    background: linear-gradient(#829ebc,#225588);
+    border-left: 1px solid #3c6690;
+    border-top: 1px solid #3c6690;
+    border-bottom: 1px solid #3c6690;
+    box-shadow: 0px 1px 1px rgba(255,255,255,0.3) inset;
+    padding: 3px 10px;
+}
+table td{
+    border-left: 1px solid #a8b7c5;
+    border-bottom: 1px solid #a8b7c5;
+    border-top:none;
+    padding: 3px 10px;
+}
+table td:last-child{
+    border-right: 1px solid #a8b7c5;
+}
+table tr:last-child td:first-child {
+    border-radius: 0 0 0 5px;
+}
+table tr:last-child td:last-child {
+    border-radius: 0 0 5px 0;
+}
+td.poll_1 {
+    background-color: #ccf;box-shadow: 0px -3px 5px 1px #bbe inset;
+}
+td.poll_2 {
+    background-color: #cfc;box-shadow: 0px -3px 5px 1px #beb inset;
+}
+td.poll_3 {
+    background-color: #fcc;box-shadow: 0px -3px 5px 1px #ebb inset;
+}
+
+tr.red {
+    background:#fcc;box-shadow: 0px -3px 5px 1px #ebb inset;
+}
+body.red {
+    background-color:#fcc;
+}
+.btn-blink {
+    animation: blink-btn 0.5s linear infinite normal;
+}
+@keyframes blink-btn{
+    0% {
+        box-shadow:0px 0px 0px 0px rgba(255,0,0,1);
+    }
+    100% {
+        box-shadow:0px 0px 0px 5px rgba(255,0,0,0.6);
+    }
+}

@@ -121,10 +121,12 @@ def check(request, player_id, round_no):
     # ヒント１の数が自分の順番－１なら「ヒント入力中」
     if hint1_cnt == round.order - 1:
         response['status'] = 1
+        response['thinking'] = hint1_cnt + 1
         return HttpResponse(json.dumps(response))
     # そうでなくヒント１の数がプレイヤー数未満なら「ヒント入力待ち」
     if hint1_cnt < round.game.player_cnt:
         response['status'] = 2
+        response['thinking'] = hint1_cnt + 1
         return HttpResponse(json.dumps(response))
     # 投票１の数がプレイヤー数未満で
     if poll11_cnt < round.game.player_cnt:
@@ -138,10 +140,12 @@ def check(request, player_id, round_no):
     # ヒント２の数が自分の順番－１なら「ヒント入力中」
     if hint2_cnt == round.order - 1:
         response['status'] = 1
+        response['thinking'] = hint2_cnt + 1
         return HttpResponse(json.dumps(response))
     # そうでなくヒント２の数がプレイヤー数未満なら「ヒント入力待ち」
     if hint2_cnt < round.game.player_cnt:
         response['status'] = 2
+        response['thinking'] = hint2_cnt + 1
         return HttpResponse(json.dumps(response))
     # 投票２の数がプレイヤー数未満で
     if poll21_cnt < round.game.player_cnt:

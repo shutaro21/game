@@ -1,12 +1,5 @@
-{% load static %}
-<!doctype html>
-<html lang="ja">
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Linq</title>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+{% extends "linq/base.html" %}
+{% block script %}
 	<script>
 		$(function(){
 			check_entry();
@@ -28,21 +21,19 @@
 			});
 		}
 	</script>
-	</head>
-<body>
+{% endblock %}
+{% block content %}
 定員：{{ game.player_cnt }}
 <div id='entry_area'>
 <form action="{% url 'linq:entry_player' game.id %}" method="post">
 {% csrf_token %}
-<table>
-<tr><td>プレイヤー名</td><td><input type="text" name="player_name" maxlength="40" class="form-control" required id="player_name"></td></tr>
-</table>
+プレイヤー名：<input type="text" name="player_name" maxlength="40" class="form-control" required id="player_name">
 <button id="entry_player" type="submit">登録</button>
 </form>
 </div>
 <br>
 エントリー状況
-<table border>
+<table>
 	<tr><th>名前</th><th>再入場</th></tr>
 	{% for i in player_cnt %}
 		<tr>
@@ -52,5 +43,4 @@
 	{% endfor %}
 </table>
 <input id="player_cnt" type="hidden" value="{{ game.player_cnt }}"></input>
-</body>
-</html>
+{% endblock %}

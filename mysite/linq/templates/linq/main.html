@@ -1,14 +1,5 @@
-{% load static %}
-<!doctype html>
-<html lang="ja">
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Linq</title>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-</head>
-<body>
+{% extends "linq/base.html" %}
+{% block script %}
 <script>
 $(function(){
 	check_result()
@@ -45,6 +36,11 @@ function check_result(){
 	$.getJSON('/linq/{{ player.id }}/{{ round_no }}/check', function(res){
 		console.log(res);
 		for (i = 0; i < res.players.length; i++){
+			if(i+1 == res.thinking){
+				$('#raw_'+(i+1)).addClass("red")
+			}else{
+				$('#raw_'+(i+1)).removeClass("red")	
+			}
 			$('#no_'+(i+1)).text(res.players[i].no);
 			$('#name_'+(i+1)).text(res.players[i].name);
 			$('#score_'+(i+1)).text(res.players[i].score);
@@ -71,19 +67,28 @@ function check_result(){
 		if(res.status == 5){
 			window.location.href = "/linq/{{ player.id }}/{{ round_no }}/result";
 		}
+		if(res.status == 1 || res.status == 3){
+			$('body').addClass("red")
+			$('button').addClass("btn-blink")
+		}else{
+			$('body').removeClass("red")
+			$('button').removeClass("btn-blink")
+		}
 		if(res.status == 0 || res.status == 2 || res.status == 3 || res.status == 4){
 			setTimeout(check_result, 5 * 1000);
 		}
 	});
 }
 </script>
+{% endblock %}
+{% block content %}
 プレイヤー名：{{ player.name }}<br>
 スコア：{{ player.score }}<br>
 お題：<span id='word'></span><br>
-<table border>
-<tr><th>No.</th><th>名前</th><th>スコア</th><th>ヒント１</th><th>ヒント２</th><th>投票１</th><th>投票２</th></tr>
+<table>
+<tr><th>No.</th><th>名前</th><th>スコア</th><th>ヒント１</th><th>ヒント２</th><th>投票１</th><th>投票２</th><th>チェック</th></tr>
 {% for i in player_cnt %}
-	<tr>
+	<tr id="raw_{{ forloop.counter }}">
 	<td id="no_{{ forloop.counter }}"></td>
 	<td id="name_{{ forloop.counter }}"></td>
 	<td id="score_{{ forloop.counter }}"></td>
@@ -104,5 +109,4 @@ function check_result(){
 </div>
 <input id="poll11" type="hidden" value=""></input>
 <input id="poll12" type="hidden" value=""></input>
-</body>
-</html>
+{% endblock %}

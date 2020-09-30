@@ -7,14 +7,11 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Linq</title>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<link href="{% static 'css/base.css' %}" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Kosugi&display=swap" rel="stylesheet">
 </head>
 <body>
-<form action="{% url 'linq:regist_player' game.id %}" method="post">
-{% csrf_token %}
-<table>
-<tr><td>プレイヤー名</td><td><input type="text" name="player_name" maxlength="40" class="form-control" required id="player_name"></td></tr>
-</table>
-<button id="regist_player" type="submit">登録</button>
-</form>
+    {% block script %}{% endblock %}
+    {% block content %}{% endblock %}
 </body>
 </html>
