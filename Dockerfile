@@ -1,4 +1,5 @@
 FROM nginx/unit:1.19.0-python3.7
+COPY bundle.pem /docker-entrypoint.d/
 COPY unit_config.json /docker-entrypoint.d/
 COPY mysite /home/django/mysite/
 COPY settings /home/django/settings/
