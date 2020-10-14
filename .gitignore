@@ -132,3 +132,6 @@ dmypy.json
 # VS Code
 .vs
 .vscode
+
+# Certification file
+.pem

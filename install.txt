@@ -20,3 +20,12 @@ apt-get install docker-compose
 docker-compose --version
 docker-compose build
 docker-compose up -d
+
+--SSL
+snap install core; snap refresh core
+snap install --classic certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
+--WEBサーバ停止
+certbot certonly --standalone
+cd /etc/letsencrypt/live/game.shutaro.jp
+cat cert.pem chain.pem privkey.pem > /home/shutaro21/bundle.pem
