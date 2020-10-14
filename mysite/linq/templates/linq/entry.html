@@ -23,7 +23,10 @@
 	</script>
 {% endblock %}
 {% block content %}
-定員：{{ game.player_cnt }}
+定員：{{ game.player_cnt }}<br>
+開始スコア：{{ game.start_score }}<br>
+終了スコア：{{ game.end_score }}<br>
+ソロプレイヤー数：{{ game.solo_cnt }}<br><br>
 <div id='entry_area'>
 <form action="{% url 'linq:entry_player' game.id %}" method="post">
 {% csrf_token %}
