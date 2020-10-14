@@ -4,6 +4,7 @@ class Game(models.Model):
     player_cnt = models.IntegerField('プレイヤー人数')
     start_score = models.IntegerField('開始スコア')
     end_score = models.IntegerField('終了スコア')
+    solo_cnt = models.IntegerField('ソロプレイヤー人数')
 
 class Player(models.Model):
     game = models.ForeignKey('Game', on_delete=models.CASCADE)

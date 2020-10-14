@@ -11,10 +11,18 @@ def index(request):
 
 # ゲーム作成処理
 def create_game(request):
+    if int(request.POST['player_cnt']) % 2 == 1:
+        solo_cnt = 1
+    elif 'on' in request.POST.getlist('solo'):
+        solo_cnt = 2
+    else:
+        solo_cnt = 0
+
     game = Game.objects.create(
         player_cnt = request.POST['player_cnt'], 
         start_score = request.POST['start_score'], 
         end_score = request.POST['end_score'], 
+        solo_cnt = solo_cnt,
     )
     # エントリー画面に遷移
     return HttpResponseRedirect(reverse('linq:entry', args=(game.id,)))
@@ -316,15 +324,15 @@ def make_round(game_id, round_no):
     word_list = list(word)
     # シャッフルする
     random.shuffle(word_list)
-    # プレイヤー数－１を２で割って切り捨てた数の分、player配列に取得する
-    word_cnt = (game.player_cnt - 1) // 2
+    # プレイヤー数－ソロプレイヤー数を２で割って切り捨てた数の分、player配列に取得する
+    word_cnt = (game.player_cnt - game.solo_cnt) // 2
     player_word = []
     for i in range(word_cnt):
         player_word.append(word_list.pop().word)
     # 同じものをペア分として作成する
     player_word = player_word * 2
-    # 奇数の場合は1人、偶数の場合は2人、「？」を追加する
-    player_word = player_word + ['？'] * (game.player_cnt - word_cnt * 2)
+    # ソロプレイヤー数の分、「？」を追加する
+    player_word = player_word + ['？'] * game.solo_cnt
     # シャッフルする
     random.shuffle(player_word)
     # 各プレイヤーごとにラウンドデータを作成する
