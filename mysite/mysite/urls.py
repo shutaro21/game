@@ -19,4 +19,5 @@ from django.urls import path, include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('linq/', include('linq.urls')),
+    path('wg/', include('wg.urls')),
 ]

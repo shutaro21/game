@@ -1,0 +1,344 @@
+<html>
+<head>
+<style>
+	.tooltip {
+	    width:240px;
+	    position:relative;
+	    padding:10px;
+	    font-size:12px;
+	    background-color:#666;
+	    color:#fff;
+	    top:50px;
+	}
+	td {
+		white-space:nowrap;
+	}
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+var num = {};
+var template_json;
+var group = {
+	"civil1":{"name":"市民",   "color":"#ccf",	"wiki_color":"blue"},
+	"civil2":{"name":"",       "color":"#ccf",	"wiki_color":"blue"},
+	"wolf"  :{"name":"人狼",   "color":"#fcc",	"wiki_color":"red"},
+	"other" :{"name":"その他", "color":"#cfc",	"wiki_color":"green"},
+};
+var group_wiki_color = {
+	"civil1":"blue",
+	"civil2":"blue",
+	"wolf":"red",
+	"other":"green",
+};
+var position = {
+	"shimi" :{"name":"市民",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#01", "description":"なんの能力も持たないただの人。<br>逆に、なんの能力も持っていないからこそ、人狼に噛まれることを恐れず、自分の推論を述べることができる。<br>ただし、自分から市民であることを明かすことは悪手である。なぜなら特別な役職の潜伏枠を狭めることになるからだ。<br>基本的には役職者の盾となり、市民陣営の勝利のため、処刑されることもいとわない心構えが必要となる。"},
+	"ura"   :{"name":"占い師",          "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#02", "description":"かなりの実力者として名高い占い師。<br>毎夜、一人を占い、その人物が「人狼」か「人狼でない」か知ることができる。<br>さらに、妖狐を占った場合は呪殺する。<br>とても重要な役職であるゆえ、騙りが出やすく最後まで生存するのは難しい。<br>基本的には市民側に情報を多く残せるように心がけることが勝利へつながる。<br>※初日に占いを行うかどうかは屋敷の設定の「初日占い」で変更できる。"},
+	"kari"  :{"name":"狩人",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#03", "description":"静かに人々を守る、凄腕の狩人。<br>毎夜、一人を人狼の襲撃から守ることができるが、自分を守ることはできない。<br>基本的には、できるだけ生存し続け、重要な人物を守ることが使命である。<br>正体がさらされると真っ先に人狼の襲撃候補となってしまうため注意が必要。<br>ただし、寡黙になりすぎるのも危険だ。<br>※同じ人を連続で守ることができるかは屋敷の設定の「連続ガード」で変更できる。"},
+	"rei"   :{"name":"霊能者",          "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#04", "description":"祈りによって特殊なモノが視える霊能者。<br>毎夜、その日に処刑された人と突然死した人が「人狼である」「人狼でない」「大狼である」「子狐である」の判別ができる。<br>基本的には受動的な行動になりがちだが、占い師の真偽を判定したり、残りの人狼の数を把握したりと、重要な役割でもある。<br>そのため、占い師と同様に偽物が騙りに出ることが多い。"},
+	"futa"  :{"name":"双子",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#05", "description":"いつも一緒に過ごしている仲良しの双子。<br>必ず二人がペアで存在し、お互いが人間であることを知っている。<br>基本的には自分たちが人間であることを証明しやすいので、場のまとめ役になることが多い。<br>二人とも双子であることを公表するのか、片方だけが公表するのかは状況によって様々。<br>※片方が死んだ時にもう片方も死亡するかは屋敷の設定の「双子の道連れ」で変更できる。"},
+	"nekoma":{"name":"猫又",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#06", "description":"自由気ままで予想がつかない猫又。<br>人狼に襲撃された場合は、人狼の中から一人をランダムに選んで道連れにする。<br>処刑された場合は、生存者の中から一人をランダムに選んで道連れにする。<br>複数の猫又の能力が同時に発動した場合、ランダムで選ばれる道連れ対象が同じ人になることもある。<br>人狼を道連れにできる強力な能力だが、処刑してしまうと市民も対象となるため注意が必要。"},
+	"kaito" :{"name":"怪盗",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#07", "description":"とある屋敷にふと舞い降りた華麗なる怪盗。<br>初日の夜に一人を選んで、選んだ人物の役職を盗むことができる。盗んだ役職固有の夜の行動は、次の日の夜から行うことが可能となる。<br>盗まれた人は次の日の夜まで盗まれたことには気づかず、その後、市民となる。<br>対象がサイコでも盗むことができる。<br>※人狼、妖狐、ゾンビ、サンタ、恋人の正体を知る役職が盗まれた場合は死亡する（死亡する役職：人狼系、妖狐、狂信者、背徳者、ささやく狂人、子狐、背信者、キューピット、悪女、赤鼻のトナカイ、ゾンビマニア）"},
+	"pan"   :{"name":"パン屋",          "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#08", "description":"毎日まじめに働くパン屋。<br>生存していた場合は、毎朝パンを焼く。<br>基本的な行動は市民とあまり変わらない。<br>パン屋が死亡してしまうと、それ以降の朝にはパンが焼かれなくなる。<br>死亡したタイミングがわかりやすいため、騙られにくいが、正体が判明すると襲撃されやすくもなる。"},
+	"shicho":{"name":"市長",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#09", "description":"市をささえる偉大な市長。<br>その発言力は大きく、処刑の投票の時には、市長の投票は二票分として数える。<br>投票数が拮抗した時に力を発揮する。<br>また、屋敷の設定で「投票先」を「見せる」にしていた場合は、正体が判明しやすいので注意が必要。"},
+	"otsuki":{"name":"狼憑き",          "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#10", "description":"人狼の怨念に取り憑かれてしまった人間。<br>何の能力も持たない普通の人間なのだが、「占い師」「子狐」に占われると「人狼」と判定されてしまう。<br>ただし、「賢者」「妖術師」に占われた場合は、「狼憑き」と判定される。<br>市民陣営だが、占い結果が「人狼」と出るため迷惑な存在。<br>人狼に利用される可能性があるので注意が必要。"},
+	"wana"  :{"name":"罠師",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#11", "description":"罠で獲物を捕らえる罠師。<br>毎夜、一人を罠で守ることができる。<br>罠で守られた人を人狼が襲撃した場合、人狼は死亡し、襲われた人は死亡しない。<br>また、狩人と同じ人物を指定した場合は、狩人が罠にかかり死亡してしまい、人狼の襲撃は防げない。<br>基本的には狩人と同様な行動をとる。<br>※同じ人を連続で守ることができるかは屋敷の設定の「連続ガード」で変更できる。"},
+	"tobo"  :{"name":"逃亡者",          "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#12", "description":"恐れ逃げ惑う逃亡者。<br>人一倍臆病な性格のため、一人でいることに耐えられず、初日の夜以外の毎夜一人を選んでその人のもとに逃亡する。<br>逃亡した場合、自身が人狼に襲撃されても死亡しない。<br>逃亡した先が襲撃されると死亡するが、逃亡先が狩人などで守られていた場合は助かる。<br>逃亡した先が人狼だった場合は、たとえ、狩人などで守られていた場合でも死亡する。<br>また、逃亡したとしても暗殺者、魔女、医者、番犬、などの能力からは逃げることはできない。<br>また、死亡してしまった場合、市民陣営が勝利していても負けとなってしまうので注意が必要<br>※逃亡先の呪われし者が襲撃を受けた場合は、逃亡者は死亡しない。<br>※逃亡しなかった場合にどうなるかは、屋敷の設定の「逃亡しない」で変更できる。"},
+	"ken"   :{"name":"賢者",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#13", "description":"知識を極めた見通す力をもつ賢者。<br>毎夜、一人を占い、その役職を知る。<br>また、妖狐を占うと呪殺することもできる。<br>基本的には、占い師と同様な行動方針となるが強力な能力を持つがゆえ、より信頼を勝ち取りやすくなっている。<br>ただし、結果をただ伝えれば良い占い師と違い発言に対しては細心の注意が必要となる。<br>※初日に占いを行うかどうかは屋敷の設定の「初日占い」で変更できる。"},
+	"aka"   :{"name":"赤ずきん",        "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#14", "description":"きれいなお花と寄り道が大好きな赤ずきん。<br>人狼に襲撃されると仮死状態になるが、その日以降に人狼が死亡すると、次の日の朝に人狼のお腹の中から蘇生する。<br>仮死状態のときは、死亡しているのと同じ扱いになるが、墓場で会話をすることや、発言を見ることはできない。"},
+	"kizo"  :{"name":"貴族",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#15", "description":"昔からある由緒正しき家系の貴族。<br>必ず「奴隷」と一緒にセットで入る。<br>人狼に襲撃された時、奴隷が生きていれば身代わりとして奴隷が死亡する。<br>貴族には奴隷が誰かわからない。<br>奴隷が生きている限り一度だけ襲撃されても生き残るため生存率は高めだが、常に奴隷が命を狙っていることを忘れてはならない。"},
+	"dorei" :{"name":"奴隷",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#16", "description":"由緒正しき貴族に仕えてきた奴隷。<br>必ず「貴族」と一緒にセットで入る。<br>貴族が人狼に襲撃された場合、身代わりとして奴隷は死亡する。<br>奴隷は誰が貴族か知っている。<br>市民陣営勝利の時に、貴族が死亡していると勝利になるが、その時の奴隷の生死は問わないので、ときには自らの命を投げ出しつつも、貴族の命を奪う算段が必要。"},
+	"noro"  :{"name":"呪われし者",      "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#17", "description":"人狼の呪いをかけられた人間。<br>最初は「市民」と同じ扱いとなるが、襲撃されても死なずに次の日から人狼となる。<br>襲撃されるまで本人も自分が「呪われし者」であることを知らない。<br>「占い師」「子狐」に占われると襲撃されるまでは「人狼でない」と判定され、襲撃された後は「人狼」と判定される。<br>「賢者」「妖術師」に占われた場合は襲撃されるまでは「呪われし者」と判定される。<br>襲撃されるまでは市民陣営が勝利すると勝ちとなるが、襲撃された後は人狼陣営となるので、人狼陣営の勝利で勝ちとなる。"},
+	"doku"  :{"name":"独裁者",          "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#18", "description":"影で全てを牛耳る独裁者。<br>「独裁者CO（カミングアウト）」することによって一度だけ昼の時間を強制的に終了させ、自分が指定した人物をその日の処刑者にすることができる。<br>人狼陣営のPP（パワープレイ）等を防ぐ時に使用する。<br>むやみにやると嫌われる。<br>ただし、夕方（投票時間）にはCOすることはできない。<br>※独裁者の能力を使用するためには、COボタンからCOする必要がある。<br>※独裁者の能力を使用した日は突然死が発生しない。"},
+	"seisho":{"name":"聖職者",          "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#19", "description":"死さえも退ける力を持つ、聖職者。<br>自分以外の誰か一人を聖なる護りでガードし、一度だけ死から守る。<br>ただし、一部の死からは守ることはできない。<br>ガード対象の選択は夜に行う。<br>聖なる護りは発動するまで継続されるが、複数の聖職者がいた場合、すでに聖なる護りでガードされている人に、聖なる護りを使っても効果が二回に増えることはない。<br>※突然死、後追いの死亡は防げない。"},
+	"ansa"  :{"name":"暗殺者",          "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#20", "description":"とある屋敷に潜り込んだ暗殺者。<br>二日目以降の夜に一度だけ指定した一人を暗殺することができる。<br>仮に暗殺対象が「狩人」「罠師」で守られていても暗殺することができる。ただし「聖職者」「巫女」の聖なる護りにはガードされてしまう。<br>基本的には、なるべく処刑と襲撃を避け、生き延びることに専念し、ここぞという時に暗殺を行う。<br>暗殺対象によっては、その後の勝敗を大きく左右する重要な役職。"},
+	"wara"  :{"name":"わら人形",        "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#21", "description":"一人では死ねない呪いのかかった人間。<br>処刑か襲撃で死亡した時に、一人を選択して道連れにする。<br>死亡した時に道連れを選ぶため、いつの間にか死亡していたということが起こらず、騙られにくい。<br>誰を道連れにするかが非常に重要となるため、いつ死んでもいいような心構えが必要。<br>※「後追い」「道連れ」「突然死」での死亡時には能力は発動しません。"},
+	"deshi" :{"name":"占い師の弟子",    "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#22", "description":"将来有望な若者、占い師の弟子。<br>占い師が生存している場合は何の能力も持っていないが、占い師が死んだ場合は占い師と同じ力を手に入れる。<br>占い師が処刑された場合は、その日の夜から能力を使うことができる。<br>また最初に配られるカードは「占い師の弟子」のものになり、誰が占い師か知らない。<br>基本的には生き残ることを優先して行動することになる。<br>※必ず「占い師」とセットで入る。"},
+	"joo"   :{"name":"女王",            "group":"civil1", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#23", "description":"市民ならば誰でも知っている愛すべき女王。<br>死亡すると人狼と妖狐以外の全員が死亡する。<br>誰が女王か市民陣営の人は全員知っているが、他の陣営の人は知らない。<br>また、女王が死んだ時に生霊の能力が発動した場合、生霊が新しい女王となり市民陣営は後追いをしない。<br>女王が死亡するだけで市民陣営は敗北となるので、正体がばれないように市民全員が一丸となって行動する必要がある。"},
+	"miko"  :{"name":"巫女",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#24", "description":"自らの身を聖なる力で守る巫女。<br>夜に一度だけ聖なる護りを使って、自分を守ることができる。<br>聖なる護りはその夜から次の日の処刑の後まで一部を除く全ての死亡に有効となる。<br>襲撃されそうな夜、次の日に処刑されそうな時など、聖なる護りを使うタイミングが最も重要となる。<br>※突然死、後追いの死亡は防げない。"},
+	"majo"  :{"name":"魔女",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#25", "description":"秘術により生死を操る魔女。<br>秘術によって作り出した蘇生薬と毒薬を持っている。<br>二日目以降の夜の行動で毒薬を使用して、一人を選んで、殺すことができる、<br>あるいは蘇生薬を使用して、その日に処刑された人物を復活させることができる。<br>ただし、後追いなどで死亡した人は蘇生できない。<br>蘇生薬と毒薬は合計で二回まで使うことができるが、蘇生薬は一回しか使えない。<br>薬の使い所を見極めることが重要となる。"},
+	"ban"   :{"name":"番犬",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#26", "description":"初日の夜に「飼い主」とする人物を選ぶ。<br>自分が生存している間は、人狼の襲撃から「飼い主」を守ることができるが、二日目以降の夜の行動で「飼い主」をかみ殺すこともできるようになる。<br>「飼い主」が市民陣営だと思えば、そのまま護衛することができるし、敵とみなせば即殺すこともできる。<br>また、「占い師」「子狐」に占われると「人狼」と判定されてしまうので注意が必要。"},
+	"choro" :{"name":"長老",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#27", "description":"市民陣営の心の支え的な人間。<br>一度目の襲撃を受けても死亡しないが、ニ度目の襲撃で死亡する。<br>ただし、襲撃以外の場合は一回目で死亡する。<br>襲撃に一度耐えることができる強力な能力だが長老が死亡した場合、心の支えを失った市民陣営の全能力者は能力が使えなくなってしまう。<br>※夜の行動は行えなくなり、聖なる護りなども即座に消滅する。"},
+	"ikiryo":{"name":"生霊",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#28", "description":"生きたまま誰かにとり憑く生霊。<br>初日の夜の行動で一人を選ぶ。<br>その後、選んだ人が死亡した場合に、その人の役職をコピーし、勝利条件や陣営カウントも、コピーした役職のものに変更される。<br>選んだ人が処刑された場合は、その夜から、すぐにその役職の行動をすることができる。<br>※「サンタ」が退去で屋敷を去った場合は死亡ではないため役職をコピーできない。"},
+	"isha"  :{"name":"医者",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#29", "description":"医療の力で人々を救う医者。<br>夜の行動で一人を選び注射することができる。<br>注射された人は襲撃されても死亡しない。<br>ただし、二日連続で同じ人に注射するとその人は死亡してしまう。<br>自分に注射することもできる。<br>医者が複数人いた場合は、別々の医者が同じ日（及び次の日）に、同じ人物に注射をした場合も注射された人は死亡するので注意が必要。"},
+	"killer":{"name":"人狼キラー",      "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#30", "description":"人狼と素手で互角に渡り合える人間。<br>人狼から襲撃を受けた場合に、生存している人狼の中から一人を道連れにすることができる。<br>基本的には通常の市民と同じ動きを取るが、処刑されてしまっては能力が無駄になるため、積極的に襲撃される様な行動が求められる。<br>人狼陣営としては、なんとかして処刑しておきたい人物である。"},
+	"nise"  :{"name":"偽占い師",        "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#31", "description":"自分が占い師だと思い込んでいる人間。<br>占い師だと信じ込んでいるため、自分が偽占い師だということは知らない。<br>毎夜、一人を占うことができるが、占い結果が必ず「人狼でない」と出てしまう。<br>さらに妖狐を占ったとしても呪殺はできない。<br>何度占っても「人狼でない」と出る場合は、偽占い師であることも考慮する必要がある。"},
+	"byonin":{"name":"病人",            "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#32", "description":"病気を患っている人間。<br>病気によって蝕まれているため、病人を人狼が襲撃してしまうと、次の日の夜の行動全般がおこなえなくなる。<br>基本的には通常の市民と同じ動きをとるが、処刑されてしまっては能力が無駄になるため、襲撃される様な行動が望ましい。<br>人狼陣営としては、なんとかして処刑しておきたい人物である。"},
+	"jokari":{"name":"饒舌な狩人",      "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#33", "description":"喋らずにはいられない困った狩人。<br>毎日指定される「お題」を投票の時間が始まるまでに発言しないとその夜に死亡してしまう。<br>基本的には通常の狩人と同じ行動をとるが、発言の隙間に、いかに自然に「お題」を紛れ込ませるかが重要となる。<br>システムを使ってあぶり出すこと（ひらがな縛り等）をしてはならない。"},
+	"tantei":{"name":"名探偵",          "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#34", "description":"どんな難事件でも解決できる名探偵。<br>毎夜、襲撃されて死亡した人の役職を知ることができる。<br>暗殺や罠死した人狼、サイコを占って死んだ占い師などの役職も知ることができる。<br>普段は知ることのできない情報を得ることにより、偽COなどを見破ることができる。"},
+	"prin"  :{"name":"プリンセス",      "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#35", "description":"まだ、自分の正体もわからない女王の跡継ぎ。<br>女王が生存している場合は何の能力も持っていないが、女王が死んだ時は自分が新しい女王として即位する。<br>女王は、誰がプリンセスかを知っているが、プリンセス本人を含めそれ以外の人は、誰がプリンセスであるかを知らない。<br>プリンセスは自分の正体が市民と表示される。<br>※必ず「女王」とセットで入る。<br>※役職希望不可"},
+	"shinbu":{"name":"新聞配達",        "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#36", "description":"重要なニュースをみんなに届ける新聞配達。<br>朝に、無残な姿で発見された人の死因の載った新聞を全体に配達することができる。<br>新聞配達が死亡すると新聞は配達されない。<br>できるだけ生存し続け、重要な情報を伝えることが使命である。<br>※配達は屋敷の設定で1回のみか毎朝かを「配達の回数」で変更できる。"},
+	"gyam"  :{"name":"ギャンブラー",    "group":"civil2", "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_01.html#37", "description":"スリルを求めて賭けに興じるギャンブラー。<br>投票時に投票するか票をためるか選択できる。<br>票をためた場合はその日の投票はできなくなるが票がストックされる。（最大9票）<br>投票した場合はたまっている票数全てをその日の投票に使う。<br>勝負に出る日が重要となるが、賭けに勝利することができれば、陣営の勝利に大きく貢献できる。"},
+	"jinro" :{"name":"人狼",            "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#01", "description":"屋敷に集まった人々の中に潜む、恐怖の人狼。<br>毎夜指定した人物を襲撃することができる。<br>仲間の人狼が誰か知っている。<br>仲間の人狼と秘密の会話をすることができる。<br>市民の数を人狼と同じかそれより少なくすると勝利となる。<br>基本的には自分の正体を隠すため、嘘の発言をしたり、他の役職を騙ったりして、屋敷を混乱させ勝利を目指す。"},
+	"kyoji" :{"name":"狂人",            "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#02", "description":"人狼に味方する危険な人間。<br>ただし、誰が人狼か知らない。<br>人狼の勝利が自らの勝利となるので、基本的には屋敷を混乱させる行動をとる。<br>例えば、他の役職（主に占い師など）を騙ったり、間違った推理でミスリードしたり、人狼の代わりに処刑されるように疑われたり、人狼の勝利のために積極的に動くポジションである。"},
+	"kyoshi":{"name":"狂信者",          "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#03", "description":"人狼を崇拝する人狼側の人間。<br>誰が人狼か知っている。<br>ただし、人狼は誰が狂信者か知らない。<br>基本的には狂人と同じように嘘をついて屋敷を混乱に導くため、他の役職（主に占い師など）を積極的に騙る戦術をとる。<br>狂人と違い、誰が人狼か知っているので、その利点を活用することが重要。"},
+	"psy"   :{"name":"サイコ",          "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#04", "description":"人狼に味方する超攻撃的な人間。<br>誰が人狼か知らない。<br>超攻撃的な性格のため、夜の行動でサイコに関わったプレイヤー（人狼、占い師、狩人など）を全員死亡させてしまう。<br>ただし、怪盗に盗まれた場合は、怪盗を殺すことができず、役職を盗まれる。<br>非常に強力な能力の役職ではあるが、仲間のはずの人狼をも死亡させてしまうため、その振る舞いには注意が必要だ。"},
+	"joro"  :{"name":"饒舌な人狼",      "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#05", "description":"喋らずにはいられない困った人狼。<br>毎日指定される「お題」を投票が始まるまでに発言しないとその夜に死亡してしまう。<br>基本的には通常の人狼と同じ行動をとるが、発言の隙間に、いかに自然に「お題」を紛れ込ませるかが重要となる。<br>仲間がいる場合は、うまく「お題」を言えるよう口裏を合わせることが重要だ。<br>市民はシステムを使って饒舌な人狼をあぶり出すこと（ひらがな縛り等）をしてはならない。"},
+	"tairo" :{"name":"大狼",            "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#06", "description":"人狼の一人。<br>占い師と子狐には「人狼でない」、賢者と妖術師には「市民」、霊能者には「大狼」と判定される。<br>占われても脅威ではないため、大胆な発言ができる。<br>また、存在するだけで占い結果に一定の疑惑を残すことができる。<br>まさに人狼のボス的な存在と言える。"},
+	"osho"  :{"name":"狼少年",          "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#07", "description":"嘘と人狼が大好きな人間の少年。<br>誰が人狼か知らない。<br>毎夜、生存者の一人を選択して嘘をつき、人狼に仕立てることができる。<br>人狼に仕立てられた人は、その次の日の夜に、「占い師」「賢者」「妖術師」「子狐」に占われると「人狼」と判定されてしまう。<br>ただし、霊能結果を騙すことはできない。<br>存在するだけで占い結果に一定の疑惑を与えることができる。"},
+	"yoju"  :{"name":"妖術師",          "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#08", "description":"妖術を使い人狼に味方する人間。<br>誰が人狼か知らない。<br>また人狼も誰が妖術師か知らない。<br>毎夜、妖術で一人を占い、その人物の役職を知ることができる。<br>妖狐を呪殺することはできない。<br>基本的には狂人と同じように嘘をついて屋敷を混乱に導くため、他の役職（主に占い師など）を積極的に騙る戦術をとったりする。"},
+	"kuro"  :{"name":"黒猫",            "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#09", "description":"人狼に味方する不思議な力を持つ黒猫。<br>誰が人狼か知らない。<br>また、人狼も誰が黒猫か知らない。<br>処刑されると生存者の中から人狼以外の一人をランダムに選んで道連れにする。<br>処刑以外の死亡では、道連れは発生しない。<br>自分を処刑させるように誘導できれば人狼陣営の有利な展開にすることができる。"},
+	"sasaki":{"name":"ささやく狂人",    "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#10", "description":"人狼に味方する危険で狡猾な人間。<br>誰が人狼か知っている。<br>人狼と秘密の会話ができるため、人狼と連携をとることもできるので、ただの狂人よりも市民陣営にとっては厄介な存在となる。<br>連携を取りつつ市民陣営に混乱させるのが主な役割である。<br>※一端末対戦の時は人狼と秘密の会話はできないが、人狼から誰がささやく狂人かわかる。"},
+	"goro"  :{"name":"強欲な人狼",      "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#11", "description":"欲深く非常に攻撃的な人狼。<br>一度だけ、夜に二人を襲撃することができる。<br>基本的には他の人狼と同じ行動をとるが、シンプルかつ強力なその能力のため、人狼陣営の切り札となりうる存在。<br>ここぞというタイミングで、二人襲撃できれば人狼陣営の勝利に大きく近づく。<br>あまり序盤に市民の数を減らしてしまうと、潜伏しづらくなるので注意が必要。"},
+	"kenro" :{"name":"賢狼",            "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#12", "description":"賢い人狼。<br>襲撃した人の役職を知ることができる。<br>基本的には他の人狼と同じ行動をとるが、人狼陣営に貴重な情報をもたらすことができるため、重要なポジション。<br>特に占い師と狂人が占い師として出てきている場合に、襲撃した人物が、占い師なのか狂人なのかを知ることができるのは戦局を大きく左右する。"},
+	"yomiro":{"name":"蘇る人狼",        "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#13", "description":"一度死んで蘇る特殊な人狼。<br>夜の行動で一度だけ「仮死」を選択することができ、「仮死」になると翌朝に無残な姿で発見されて、死亡扱いとなる。<br>次の日の朝に自動的に蘇生して生き返る。<br>人狼が蘇る人狼しか残っていないときに、「仮死」を選んでしまうと、そのまま負けとなるので使うタイミングには注意が必要。<br>仮死中は墓場での会話を聞くことも発言もできない。"},
+	"nouro" :{"name":"能ある人狼",      "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#14", "description":"敢えて襲撃しないことができる人狼。<br>能ある人狼が生きている間は、夜の行動で「襲撃しない」を選択できるようになる。<br>終盤に市民の数を調整したり、まだ狩人が生きているように見せかけた後に狩人を騙ったりと、高度な戦略を行うことができる。<br>生存している人狼が全員「襲撃しない」を選択した場合のみ、効果が発動されるため、人狼同士の連携が必要となる。"},
+	"ichiro":{"name":"一途な人狼",      "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#15", "description":"強い意志を隠し持つ一途な人狼。<br>一度だけ命がけで襲撃することで、通常殺せない相手（妖狐や長老、狩人や罠師に護衛されている相手等）でも殺すことができる。<br>ただし、通常殺せない相手の襲撃に成功した場合、一途な人狼も一緒に死亡してしまう。<br>通常でも殺せる相手の場合は、死亡しないが、その後、命がけの襲撃はできない。<br>また、奴隷や赤鼻のトナカイ、純愛者などの身代わりが発生した時も、通常の襲撃通り身代わり相手が死亡し、自分は死亡しない。"},
+	"ippiki":{"name":"一匹狼",          "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#16", "description":"味方とも馴合わない一匹狼。<br>人狼チャットに参加できず、他の人狼やささやく狂人からも認識されない。<br>一匹狼は他の人狼やささやく狂人を認識することができる。<br>味方から認識されなくとも、目指す勝利は同じなので、人狼の勝利のために尽力しよう。"},
+	"hankyo":{"name":"反逆の狂人",      "group":"wolf",   "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_02.html#17", "description":"独裁者の横暴に断固として抵抗する狂人。<br>「独裁者CO」した時に、反逆の狂人が生存していると、独裁者が投票した人ではなく、独裁者本人が処刑される。<br>その時に誰が反逆の狂人かはわからない。<br>通常の狂人のように振る舞うのか、身を潜めて好機を待つのか戦略を考える必要がある。<br>※必ず「独裁者」とセットで入る。"},
+	"yoko"  :{"name":"妖狐",            "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#01", "description":"全ての者を煙に巻く、ずる賢い妖狐。<br>市民でも人狼でもない第三勢力に属する役職。<br>市民陣営か人狼陣営が勝利した時に生存していると、勝利した陣営に代わって勝利となる。<br>特殊な妖術で人狼に襲撃されても死亡しないが占われると呪殺されてしまう。<br>基本的には、市民陣営と人狼陣営との決着がつくまで生き残ることが最優先となる。<br>人狼に襲撃されても死亡しない特徴のため、人狼達には正体が判明しやすい。"},
+	"haito" :{"name":"背徳者",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#02", "description":"妖狐に心酔してしまった人間。<br>誰が妖狐・子狐か知っている。<br>心酔するあまり、妖狐が全滅するとすぐに後追いで死亡する。<br>基本的には、妖狐側の狂人のような存在で、嘘をついて屋敷を混乱に導いたり、占い師の信用を落とすために、占い師を騙ったり、占い先に選ばれるような発言をする。"},
+	"kogi"  :{"name":"子狐",            "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#03", "description":"ちょっとやんちゃな妖狐の子ども。<br>人狼に襲撃されると死亡するが、占われても呪殺されない、特殊な妖狐。<br>妖狐がいた場合、誰が妖狐か知っているが、妖狐からは誰が子狐かわからない。<br>夜の行動で一人を選んで占うことができる。<br>占いの成功率は５０％で占いに成功すると、「人狼」か「人狼でない」か知ることができる。失敗すると「占い失敗」と表示される。<br>妖狐を呪殺することはできない。"},
+	"haishi":{"name":"背信者",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#08", "description":"妖狐を崇拝する人間。<br>誰が妖狐・子狐か知っている。<br>また、妖狐、子狐からも誰が背信者かわかる。<br>忠誠心溢れるあまり、妖狐・子狐が全滅するとすぐに後追いで死亡する。<br>妖狐からの信頼も厚く、強力に妖狐をサポートすることができる存在。"},
+	"zombi" :{"name":"ゾンビ",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#05", "description":"人知れず感染してしまったゾンビ。<br>毎夜誰か一人に噛みついて、その人を感染者にすることができる。<br>感染者になった人は自分が感染したことには気づかない。<br>ゾンビ以外の生存者が全員感染者になり、ゾンビが生存していれば、ゾンビ陣営の即勝利となる。<br>※感染者はゾンビ陣営ではない。"},
+	"zomma" :{"name":"ゾンビマニア",    "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#09", "description":"ゾンビに憧れる人間、ゾンビマニア。<br>ゾンビ陣営が勝利すると自身も勝利する。<br>ゾンビマニアは、ゾンビが誰か知っている。<br>ゾンビは、ゾンビマニアが誰かを知らない。<br>ゾンビが死亡すると後追いで死亡してしまうが既にゾンビに噛まれていた場合は、新たなゾンビとなる。"},
+	"koi"   :{"name":"恋人",            "group":"other",  "count":0, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#07", "description":"あらゆる障壁を超えて恋に落ちた二人。<br>通常の役職に追加されて、恋人となる。<br>お互いが恋人であることを知っている。<br>片方が死んだらもう片方も後追いで死亡する。<br>他の陣営が勝利した時、二人とも生存していると勝利陣営に代わり勝利となる。<br>恋人が複数ペアいた場合は、最後まで生存していたペアだけが勝利する。<br>恋人同士であることを悟られないように、お互いの生存を第一に考える必要がある。"},
+	"cupid" :{"name":"キューピット",    "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#10", "description":"愛の求道者、キューピット。<br>初日の夜の行動で二人を選んで恋人にする。<br>自分を選ぶこともできる。<br>最後まで恋人の二人が生存していると勝利となる。恋人でなければ、自分の生死は問わないが恋人達が死亡した場合はキューピットも後追いする。<br>愛を運ぶキューピットは、恋人達を生かすためにあらゆる手を打つ必要がある。"},
+	"akujo" :{"name":"悪女",            "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_03.html#11", "description":"人々を誘惑する悪女。<br>初日の夜の行動で本命と手玉を選ぶ。悪女本人と本命は恋人状態となるが、手玉は悪女の恋人であると思い込む。悪女と本命はそれぞれが死亡すると後追いで死亡するが、悪女と手玉はそれぞれが死亡しても後追いしない。<br>手玉の所属陣営・勝利条件は変更されない。<br>※手玉の数は屋敷の設定の「悪女が選べる手玉の数」で変更できる。<br>※恋人や手玉による悪女の暴露は原則禁止。"},
+	"santa" :{"name":"サンタ",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#00", "description":"よい子の味方、ご存知サンタ。<br>毎夜、一人にプレゼントを贈ることができる。<br>一度プレゼントを贈った相手には贈ることはできない。<br>自分以外の生存者全員にプレゼントを贈ると仕事を終えたサンタは、翌朝、屋敷を去り、勝利陣営が決定すると、追加で勝利となる。"},
+	"akato" :{"name":"赤鼻のトナカイ",  "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#05", "description":"サンタに付き従う真っ赤なお鼻のトナカイ。<br>誰がサンタか知っているが、サンタは誰がトナカイか知らない。<br>サンタが襲撃されると身代わりで死亡し、サンタが死亡すると後追いで死亡する。<br>サンタがプレゼントを全員に渡して去るときに赤鼻のトナカイも生存していると一緒に去る。"},
+	"junkyo":{"name":"殉教者",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#01", "description":"自分が信じるもののため命を落としたい人間。<br>どの陣営が勝利したかは関係なく、自分が死亡すると追加で勝利となる。<br>ただし、突然死した場合は勝利にならない。<br>自分の正体が判明してしまうと、処刑先にも襲撃先にも選ばれにくくなるため、基本的にはできるだけ正体は隠しながらチャンスをうかがう。<br>※突然死とは一度も発言しないで死亡すること。"},
+	"teru"  :{"name":"てるてる坊主",    "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#02", "description":"吊られることを願い続けるてるてる坊主。<br>どの陣営が勝利したかは関係なく、自分が処刑されると勝利になる。<br>襲撃や他の理由で死亡した場合は勝利にならない。<br>自分の正体が判明してしまうと、処刑先に選ばれにくくなるため、できるだけ正体は隠しながらチャンスをうかがい、処刑してもらうために人狼や狐と思われるような戦略が必要となる。"},
+	"buta"  :{"name":"ぶた男",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#03", "description":"どの陣営が勝利したかは関係なく、自分が襲撃されると勝利になる。<br>処刑や他の理由で死亡した場合は勝利にならない。<br>自分の正体が判明してしまうと、襲撃先に選ばれにくくなるため、できるだけ正体は隠しながらチャンスをうかがい、時には人狼と取引したりする柔軟な行動が求められる。"},
+	"komori":{"name":"コウモリ男",      "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#04", "description":"生き残ることに必死な人間。<br>どの陣営が勝利したか関係なく、自分が生存していると追加で勝利になる。<br>あらゆる手を使って自分が生き残るために行動する。<br>時には市民陣営のために、時には人狼陣営のために、最終的には自分が生き残るために最良の行動を選択する必要がある。"},
+	"fuku"  :{"name":"復讐者",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#06", "description":"密かに怒りの炎を燃やす復讐者。<br>一度だけ夜の行動で一人を選んで仇敵にする。<br>どこかの陣営が勝利した時に、仇敵は死亡していて、自分は生存していれば追加勝利となる。<br>最後まで仇敵を選ばないと、敗北する。<br>すべてが終わるまでに生きたまま復讐を果たす必要があるため、冷静な行動が求められる。"},
+	"amano" :{"name":"天邪鬼",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#07", "description":"市民達を惑わす天邪鬼。<br>元々は市民陣営だったが、どうしても素直になれない困った性格のため天邪鬼となった。<br>市民陣営以外の陣営が勝利すると、追加勝利となる。<br>人狼陣営だけではなく、妖狐陣営、ゾンビ陣営や恋人陣営などと共闘しながら、勝利を目指そう。"},
+	"junai" :{"name":"純愛者",          "group":"other",  "count":1, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#08", "description":"愛する者を命を懸けて守る純愛者。<br>最初の夜の行動で愛する人を選ぶ。<br>愛する人が勝利すると自身も勝利となる。<br>愛する人が処刑以外で死亡する場合、身代わりとなり死亡する。<br>愛する人が死亡した場合は、後追いで死ぬ。<br>もしも、愛する人が狩人で守られていても、先に純愛者が身代わりとなり死亡する。<br>※突然死、後追いの死亡は身代わりできない。"},
+	"parai" :{"name":"酔っぱらい",      "group":"other",  "count":0, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#09", "description":"自分の正体すら忘れてしまった酔っぱらい。<br>通常の役職に追加されて、酔っぱらいとなる。<br>酔っぱらいは酔いがさめるまでは、自分を市民だと思っている。しかし、ある程度の日時が経過すると夜に酔いがさめて本当の役職を知ることになる。酔っぱらっている間は、能動的な能力は発動せず（占い師、霊能者の能力など）人狼チャットなども使えない。<br>※酔いがさめる日数は屋敷の設定の「酔っ払いが目覚める日」で変更できる。"},
+	"yaku"  :{"name":"疫病神",          "group":"other",  "count":0, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#10", "description":"人知れず災難を引き寄せる疫病神。<br>通常の役職に追加されて、疫病神となる。<br>疫病神となったプレイヤーは、自分が疫病神とは気づかず、処刑時に投票しても票が入らなくなる。<br>市長やギャンブラーなどに疫病神がつき、２票以上投票できる場合は１票減ってしまう。"},
+};
+var template = [];
+$(function(){
+	for (group_id in group){
+		$("#input_area").append(
+			$('<td>').append(
+				group[group_id].name + "&nbsp;",
+				$('<table>').append(
+					$('<thead>').append(
+						$('<th>').append('役名'),
+						$('<th>').append('人数'),
+					),
+					$('<tbody>')
+						.attr('id','input_area_' + group_id)
+						.attr('style', 'background-color:' + group[group_id].color)
+				)
+			)
+		)
+	}
+	$("#input_area").append(
+		$('<td>')
+			.attr('style', 'width:50;white-space:normal;')
+			.append(
+				$('<p>')
+				.attr('class', 'tooltip')
+			)
+	)
+	for (position_id in position){
+		target = "#input_area_" + position[position_id].group
+		$(target).append(
+			$('<tr>')
+				.append(
+				$('<td>')
+					.attr('class', 'pos_name')
+					.attr('position_id', position_id)
+					.append(
+					$('<a>')
+						.attr('href', position[position_id].url)
+						.attr('target', '_blank')
+						.append(
+							position[position_id].name
+						)
+				),
+				$('<td>').append(
+					$('<input>')
+					.attr('type', 'number')
+					.attr('class', 'numInput')
+					.attr('style', 'width:50;')
+					.attr('min', 0)
+					.attr('max', 20)
+					.attr('id', position_id)
+					.attr('value', 0),
+					$('<button>')
+					.attr('type', 'button')
+					.attr('class', 'updown')
+					.attr('value','1')
+					.append('＋'),
+					$('<button>')
+					.attr('type', 'button')
+					.attr('class', 'updown')
+					.attr('value','-1')
+					.append('－')
+				)
+			)
+		)
+	}
+	if(location.search){
+		cons_def = location.search;
+		cons_def = cons_def.replace( "?cons=", "" );
+		constitution = cons_def.split("|");
+		console.log(constitution);
+		for(i = 0; i < constitution.length; i++){
+			$('#' + constitution[i]).val(Number($('#' + constitution[i]).val()) + 1);
+ 		}
+		$('.numInput').each(function(index, element){
+			num[$(element).attr("id")] = $(element).val();
+		})
+ 		refresh();
+	}
+	template_list();
+	$('.numInput').on('change', function(event){
+		num[$(this).attr("id")] = $(this).val();
+		refresh();
+	});
+	$('.updown').on('click',function(event){
+		tmp_val = Number($(this).parent().children('input').val());
+		tmp_val = tmp_val + Number($(this).val());
+		if(tmp_val >= 0 && tmp_val <= 20 ){
+			$(this).parent().children('input').val(tmp_val).change();
+		}
+	});
+	$('#template_select').on('change', function(event){
+		$('.numInput').each(function(index, element){
+			$(element).val(0);
+		})
+		if($(this).val() != 'non'){
+			constitution = template[$(this).val()].constitution;
+			for(i = 0; i < constitution.length; i++){
+				$('#' + constitution[i]).val(Number($('#' + constitution[i]).val()) + 1);
+	 		}
+	 	}
+		$('.numInput').each(function(index, element){
+			num[$(element).attr("id")] = $(element).val();
+		})
+ 		refresh();
+	});
+	$('#save_template').on('click', function(event){
+		context = {}
+		context["name"] = $('#template_name').val();
+		context["cons"] = template_json;
+		$.getJSON('./save_template', context, function(res){
+			if(res['flg']){
+				alert("保存しました。");
+			}else{
+				alert("保存に失敗しました。");
+			}
+		}).fail(function(jqXHR, textStatus, errorThrown){
+			alert("保存に失敗しました。");
+		}).always(function(){
+			template_list();
+		});
+	});
+	$('#del_template').on('click', function(event){
+		context = {}
+		context["id"] = template[$('#template_select').val()].id;
+		$.getJSON('./del_template', context, function(res){
+			if(res['flg']){
+				alert("削除しました。");
+			}else{
+				alert("削除に失敗しました。");
+			}
+		}).fail(function(jqXHR, textStatus, errorThrown){
+			alert("削除に失敗しました。");
+		}).always(function(){
+			template_list();
+		});
+	});
+	$('#display_area').on('click', 'span', function(event){
+		if($(this).css('background-color') != $('#yellow').css('background-color')){
+			$(this).css('background-color','yellow');
+			$(this)[0].textContent = '&bgcolor(yellow){' + $(this)[0].textContent + '}';
+		}else{
+			$(this).css('background-color','');
+			$(this)[0].textContent = $(this).attr('origin');
+		}
+	});
+	$('.tooltip').hide();
+    $('td .pos_name').hover(
+	    function () {
+	        $('.tooltip')[0].innerHTML = "<b>【" + position[$(this).attr("position_id")].name + "】</b><br>" + position[$(this).attr("position_id")].description;
+	        $('.tooltip').stop().fadeIn('fast');
+	    },
+	    function () {
+	        $('.tooltip').stop().fadeOut('fast');
+	    }
+	);
+});
+function template_list(){
+	$.getJSON('./get_template', function(res){
+		if(res['flg']){
+			template = JSON.parse(res["template"])
+			$("#template_select").empty();
+			$("#template_select").append(
+				$('<option>')
+					.attr('value','non')
+					.append('テンプレート')
+			);
+			for (i = 0; i < template.length; i++){
+				consListStr = "";
+				for(j = 0; j < template[i].constitution.length; j++){
+					consListStr = consListStr + position[template[i].constitution[j]].name + "、";
+				}
+				consListStr = consListStr.slice(0,-1);
+				$("#template_select").append(
+					$('<option>')
+						.attr('value',i)
+						.append(template[i].name + "（" + template[i].constitution.length + "人）：" + consListStr)
+				)
+			}
+		}else{
+			alert("テンプレートの読み込みに失敗しました。");
+		}
+	}).fail(function(jqXHR, textStatus, errorThrown){
+		alert("テンプレートの読み込みに失敗しました。");
+	});
+
+};
+function refresh(){
+	$("#display_area").empty();
+	display_text = "";
+	display_json = "";
+	display_url = location.origin + location.pathname + "?cons=";
+	display_wiki = "";
+	bef_group = "";
+	count = 0;
+	for (position_id in position){
+		if(num[position_id] > 0){
+			if(position[position_id].group.slice(0,-1) != bef_group.slice(0,-1)){
+				display_text += "<br>\n";
+				display_wiki += "}&br()&color(" + group[position[position_id].group]["wiki_color"] + "){";
+			}
+			for (j = 1; j <= num[position_id]; j++){
+				display_text += (position[position_id].name + "、");
+				display_json += ('"' + position_id + '",');
+				display_url  += (position_id + '|');
+				display_wiki += ("<span id='wiki_" + position_id + j + "' origin='" + position[position_id].name + "、'>" + position[position_id].name + "、</span>");
+				count = count + position[position_id].count;
+			}
+			bef_group = position[position_id].group;
+		}
+	}
+	display_text += ("<br>\n合計：" + count);
+	$("#display_area").append(display_text);
+	template_json = '[' + display_json.slice(0,-1) + ']';
+	display_url = '<br><br>\n共有URL：<a href="' + display_url.slice(0,-1) + '">' + display_url.slice(0,-1) + '</a>';
+	$("#display_area").append(display_url);
+	display_wiki = '<br><br>\nwiki用：' + display_wiki.slice(6) + '}';
+	$("#display_area").append(display_wiki);
+};
+</script>
+</head>
+<body>
+<div>
+	<select id="template_select"></select><br>
+	名称：<input type="text" id="template_name"></input>
+	<button id="save_template">保存</button>
+	<button id="del_template">削除</button>
+</div>
+<br>
+<div>
+	<table><tr valign="top" id="input_area"></tr></table>
+</div>
+<div id="display_area">
+</div>
+<span id='yellow' style='background-color:yellow;display:none;'></span>
+</body>
+</html>
