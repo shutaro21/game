@@ -48,7 +48,7 @@ def create_meeting(request):
             "type": "2",
             "start_time": start_time.isoformat()[0:19],
             "timezone": "Asia/Tokyo",
-            "duration": math.floor((end_time - start_time).seconds / 60),
+            "duration": math.ceil((end_time - start_time).seconds / 60),
             "settings": {
                 "join_before_host": True,
                 "use_pmi": False,
@@ -61,7 +61,7 @@ def create_meeting(request):
         return HttpResponse(json.dumps(result))
     context = {
         "topic": res.json()["topic"],
-        "start_time": res.json()["start_time"],
+        "start_time": timezone.localtime(datetime.datetime.fromisoformat(res.json()["start_time"])).strftime("%Y/%m/%d %H:%M:%S"),
         "duration": res.json()["duration"],
         "join_url": res.json()["join_url"],
         "id": res.json()["id"],
