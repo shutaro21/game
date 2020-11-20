@@ -61,7 +61,7 @@ def create_meeting(request):
         return HttpResponse(json.dumps(result))
     context = {
         "topic": res.json()["topic"],
-        "start_time": timezone.localtime(datetime.datetime.fromisoformat(res.json()["start_time"])).strftime("%Y/%m/%d %H:%M:%S"),
+        "start_time": timezone.localtime(datetime.datetime.fromisoformat(res.json()["start_time"].replace('Z', '+00:00'))).strftime("%Y/%m/%d %H:%M:%S"),
         "duration": res.json()["duration"],
         "join_url": res.json()["join_url"],
         "id": res.json()["id"],
