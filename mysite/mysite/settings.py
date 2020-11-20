@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'linq.apps.LinqConfig',
     'wg.apps.WgConfig',
+    'zoom.apps.ZoomConfig',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +138,9 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, "static"),
 )
 STATIC_ROOT = "/home/django/static/static"
+
+# zoom
+API_KEY = config.get('zoom','API_KEY')
+API_SECRET = config.get('zoom','API_SECRET')
+USER_ID = config.get('zoom','USER_ID')
+FORM_PASSWORD = config.get('zoom','FORM_PASSWORD')

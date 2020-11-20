@@ -1,0 +1,41 @@
+<html>
+<head>
+<style>
+</style>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script>
+$(function(){
+	$('#create_meeting').on('click', function(event){
+		context = {}
+		context["password"] = $('#password').val();
+		$.getJSON('./create_meeting', context, function(res){
+			if(res['flg']){
+				$('#display_area').append(
+					"会議を作成しました<br>",
+					"会議タイトル：" + JSON.parse(res["data"]).topic + "<br>",
+					"開始時刻：" + JSON.parse(res["data"]).start_time + "<br>",
+					"時間：" + JSON.parse(res["data"]).duration + "<br>",
+					"参加URL：" + JSON.parse(res["data"]).join_url + "<br>",
+					"会議ID：" + JSON.parse(res["data"]).id + "<br>",
+					"会議パスワード：" + JSON.parse(res["data"]).password + "<br>",
+				);
+			}else{
+				alert("作成に失敗しました。\n" + res['err_str']);
+			}
+		}).fail(function(jqXHR, textStatus, errorThrown){
+			alert("作成に失敗しました。");
+		});
+	});
+
+})
+</script>
+</head>
+<body>
+<div>
+	
+	password：<input type="password" id="password"></input>
+	<button id="create_meeting">作成</button>
+	<div id="display_area"></div>
+</div>
+</body>
+</html>
