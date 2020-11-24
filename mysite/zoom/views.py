@@ -70,3 +70,6 @@ def create_meeting(request):
     result["flg"] = True
     result["data"] = json.dumps(context)
     return HttpResponse(json.dumps(result))
+
+def webhook(request):
+    pass
