@@ -3,6 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.conf import settings
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 import json
 import base64
 import time, datetime
@@ -71,5 +72,6 @@ def create_meeting(request):
     result["data"] = json.dumps(context)
     return HttpResponse(json.dumps(result))
 
+@csrf_exempt
 def webhook(request):
     return HttpResponse('OK')
