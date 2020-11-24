@@ -146,6 +146,10 @@ API_SECRET = config.get('zoom','API_SECRET')
 USER_ID = config.get('zoom','USER_ID')
 FORM_PASSWORD = config.get('zoom','FORM_PASSWORD')
 
+# line
+CHANNEL_ACCESS_TOKEN = config.get('line', 'CHANNEL_ACCESS_TOKEN')
+CHANNEL_SECRET = config.get('line', 'CHANNEL_SECRET')
+
 # ロギングの設定
 DJANGO_DB_LOGGER_ENABLE_FORMATTER = True
 LOGGING = {

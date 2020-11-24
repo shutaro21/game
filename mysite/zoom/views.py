@@ -1,9 +1,11 @@
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.urls import reverse
 from django.conf import settings
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
 import json
 import base64
 import time, datetime
@@ -79,4 +81,12 @@ def create_meeting(request):
 def webhook(request):
     logger.debug(request.headers)
     logger.debug(request.POST)
-    return HttpResponse('OK')
+    handler = WebhookHandler(settings.CHANNEL_SECRET)
+    body = request.body.decode('utf-8')
+    try:
+        signature = request.META['HTTP_X_LINE_SIGNATURE']
+        handler.handle(body, signature)
+    except InvalidSignatureError:
+        HttpResponseForbidden()
+    return HttpResponse('OK', status=200)
+    
