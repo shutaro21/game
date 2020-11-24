@@ -72,4 +72,4 @@ def create_meeting(request):
     return HttpResponse(json.dumps(result))
 
 def webhook(request):
-    pass
+    return HttpResponse('OK')
