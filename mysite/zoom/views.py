@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
+from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import json
 import base64
 import time, datetime
@@ -16,6 +17,8 @@ import math
 import logging
 
 logger = logging.getLogger(__name__)
+handler = WebhookHandler(settings.CHANNEL_SECRET)
+line_bot_api = LineBotApi(settings.CHANNEL_ACCESS_TOKEN)
 
 def zoom(request):
     return render(request, 'zoom/index.html', {})
@@ -81,7 +84,6 @@ def create_meeting(request):
 def webhook(request):
     logger.debug(request.headers)
     logger.debug(request.POST)
-    handler = WebhookHandler(settings.CHANNEL_SECRET)
     body = request.body.decode('utf-8')
     try:
         signature = request.META['HTTP_X_LINE_SIGNATURE']
@@ -90,3 +92,6 @@ def webhook(request):
         HttpResponseForbidden()
     return HttpResponse('OK', status=200)
     
+@handler.add(MessageEvent, message=TextMessage)
+def handle_text_message(event):
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.message.text))
