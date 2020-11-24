@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_db_logger',
     'linq.apps.LinqConfig',
     'wg.apps.WgConfig',
     'zoom.apps.ZoomConfig',
@@ -172,6 +173,12 @@ LOGGING = {
                 "%(message)s",
             ])
         },
+        'database': {
+            'format': '\t'.join([
+                "%(funcName)s:%(lineno)s",
+                "%(message)s",
+            ])
+        },
     },
     'handlers': {
         'console': {
@@ -185,10 +192,15 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'django.server',
         },
+        'database':{
+            'level':'DEBUG',
+            'class':'django_db_logger.db_log_handler.DatabaseLogHandler',
+            'formatter': 'database'
+        },
     },
     'loggers': {
         'django': {
-            'handlers': ['console',],
+            'handlers': ['console','database'],
             'level': 'INFO',
         },
         'django.server': {
@@ -198,7 +210,7 @@ LOGGING = {
         },
         #自身のプロジェクトの設定を追加
         'zoom': {
-            'handlers': ['console',],
+            'handlers': ['console','database'],
             'level': 'DEBUG',
             'propagate': False,
         },
