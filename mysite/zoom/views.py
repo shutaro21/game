@@ -11,6 +11,9 @@ import hmac
 import hashlib
 import requests
 import math
+import logging
+
+logger = logging.getLogger(__name__)
 
 def zoom(request):
     return render(request, 'zoom/index.html', {})
@@ -74,4 +77,6 @@ def create_meeting(request):
 
 @csrf_exempt
 def webhook(request):
+    logger.debug(request.headers)
+    logger.debug(request.POST)
     return HttpResponse('OK')

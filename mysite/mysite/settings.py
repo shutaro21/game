@@ -144,3 +144,63 @@ API_KEY = config.get('zoom','API_KEY')
 API_SECRET = config.get('zoom','API_SECRET')
 USER_ID = config.get('zoom','USER_ID')
 FORM_PASSWORD = config.get('zoom','FORM_PASSWORD')
+
+# ロギングの設定
+DJANGO_DB_LOGGER_ENABLE_FORMATTER = True
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'formatters': {
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[%(server_time)s] %(message)s a',
+        },
+        #プロジェクト用のフォーマットを追加
+        'detail': {
+            'format': '\t'.join([
+                "[%(levelname)s]",
+                "%(asctime)s",
+                "%(name)s.%(funcName)s:%(lineno)s",
+                "%(message)s",
+            ])
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',   #コンソールの出力水準をDEBUGに下げる
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'detail'   #フォーマッター追加
+        },
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'django.server',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console',],
+            'level': 'INFO',
+        },
+        'django.server': {
+            'handlers': ['django.server',],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        #自身のプロジェクトの設定を追加
+        'zoom': {
+            'handlers': ['console',],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    }
+}
