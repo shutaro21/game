@@ -16,6 +16,10 @@ import requests
 import math
 import logging
 
+ZOOM_API_Key = settings.API_KEY
+ZOOM_API_Secret = settings.API_SECRET
+ZOOM_USER_ID = settings.USER_ID
+
 logger = logging.getLogger(__name__)
 handler = WebhookHandler(settings.CHANNEL_SECRET)
 line_bot_api = LineBotApi(settings.CHANNEL_ACCESS_TOKEN)
@@ -23,23 +27,25 @@ line_bot_api = LineBotApi(settings.CHANNEL_ACCESS_TOKEN)
 def zoom(request):
     return render(request, 'zoom/index.html', {})
 
-def create_meeting(request):
-    # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
+def create_meeting_api(request):
     result = {"flg":False}
-
-    API_Key = settings.API_KEY
-    API_Secret = settings.API_SECRET
-    USER_ID = settings.USER_ID
 
     if request.GET["password"] != settings.FORM_PASSWORD:
         result["err_str"] = "パスワードが正しくありません。"
-        return HttpResponse(json.dumps(result))
+    else:
+        result = create_meeting()
+
+    return HttpResponse(json.dumps(result))
+
+def create_meeting():
+    # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
+    result = {"flg":False}
 
     expiration = int(time.time()) + 10 # 有効期間10秒
     header    = base64.urlsafe_b64encode('{"alg":"HS256","typ":"JWT"}'.encode()).replace(b'=', b'') # ヘッダー
-    payload   = base64.urlsafe_b64encode(('{"iss":"'+API_Key+'","exp":"'+str(expiration)+'"}').encode()).replace(b'=', b'') # APIキーと>有効期限
+    payload   = base64.urlsafe_b64encode(('{"iss":"'+ZOOM_API_Key+'","exp":"'+str(expiration)+'"}').encode()).replace(b'=', b'') # APIキーと>有効期限
 
-    hashdata  = hmac.new(API_Secret.encode(), header+".".encode()+payload, hashlib.sha256) # HMACSHA256でハッシュを作成
+    hashdata  = hmac.new(ZOOM_API_Secret.encode(), header+".".encode()+payload, hashlib.sha256) # HMACSHA256でハッシュを作成
     signature = base64.urlsafe_b64encode(hashdata.digest()).replace(b'=', b'') # ハッシュをURL-Save Base64でエンコード
     token = (header+".".encode()+payload+".".encode()+signature).decode()  # トークンをstrで生成
 
@@ -64,7 +70,7 @@ def create_meeting(request):
                 'waiting_room': False,
             },
         }
-    res = requests.post(url + "users/" + USER_ID + "/meetings", headers=headers, data=json.dumps(data), )
+    res = requests.post(url + "users/" + ZOOM_USER_ID + "/meetings", headers=headers, data=json.dumps(data), )
     if res.status_code != 201:
         result["err_str"] = str(res.status_code) + res.text
         return HttpResponse(json.dumps(result))
@@ -78,12 +84,12 @@ def create_meeting(request):
     }
     result["flg"] = True
     result["data"] = json.dumps(context)
-    return HttpResponse(json.dumps(result))
+    return result
 
 @csrf_exempt
 def webhook(request):
     logger.debug(request.headers)
-    logger.debug(request.POST)
+    logger.debug(request.body.decode('utf-8'))
     body = request.body.decode('utf-8')
     try:
         signature = request.META['HTTP_X_LINE_SIGNATURE']
@@ -94,4 +100,7 @@ def webhook(request):
     
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
+    if '人狼' in event.message.text:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text='人狼なんて\nいるわけないさ'))
+
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=event.message.text))
