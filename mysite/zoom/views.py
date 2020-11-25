@@ -102,20 +102,20 @@ def delete_meetings():
         }
     res = requests.get(url + "users/" + ZOOM_USER_ID + "/meetings", headers=headers, params=params, )
     if res.status_code != 200:
-        result["err_str"] = '一覧取得に失敗した。\n' + str(res.status_code) + res.text
+        result["err_str"] = '一覧取得に失敗したよ！。\n' + str(res.status_code) + res.text
         return result
     meetings = res.json().get("meetings")
     if not meetings:
         result["flg"] = True
-        result["msg"] = "削除する会議は無かった"
+        result["msg"] = "削除する会議は無かったよ！"
         return result
     for meeting in meetings:
         res = requests.delete(url + 'meetings/' + str(meeting["id"]), headers=headers, )
         if res.status_code != 204:
-            result["err_str"] = '削除に失敗した。\n' + str(res.status_code) + res.text
+            result["err_str"] = '削除に失敗したよ！\n' + str(res.status_code) + res.text
             return result
     result["flg"] = True
-    result["msg"] = "会議を削除した。"
+    result["msg"] = "会議を削除したよ！"
     return result
 
 
@@ -152,7 +152,6 @@ def handle_text_message(event):
     if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
         result = delete_meetings()
         if result["flg"]:
-            data = json.loads(result["data"])
             response_message = result["msg"]
         else:
             response_message = result["err_str"]
