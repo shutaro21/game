@@ -37,10 +37,7 @@ def create_meeting_api(request):
 
     return HttpResponse(json.dumps(result))
 
-def create_meeting():
-    # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
-    result = {"flg":False}
-
+def get_zoom_token():
     expiration = int(time.time()) + 10 # 有効期間10秒
     header    = base64.urlsafe_b64encode('{"alg":"HS256","typ":"JWT"}'.encode()).replace(b'=', b'') # ヘッダー
     payload   = base64.urlsafe_b64encode(('{"iss":"'+ZOOM_API_Key+'","exp":"'+str(expiration)+'"}').encode()).replace(b'=', b'') # APIキーと>有効期限
@@ -48,6 +45,12 @@ def create_meeting():
     hashdata  = hmac.new(ZOOM_API_Secret.encode(), header+".".encode()+payload, hashlib.sha256) # HMACSHA256でハッシュを作成
     signature = base64.urlsafe_b64encode(hashdata.digest()).replace(b'=', b'') # ハッシュをURL-Save Base64でエンコード
     token = (header+".".encode()+payload+".".encode()+signature).decode()  # トークンをstrで生成
+    return token
+
+def create_meeting():
+    # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
+    result = {"flg":False}
+    token = get_zoom_token()
 
     start_time = timezone.localtime(timezone.now())
     tomorrow = start_time + datetime.timedelta(days=1)
@@ -86,6 +89,36 @@ def create_meeting():
     result["data"] = json.dumps(context)
     return result
 
+def delete_meetings():
+    result = {"flg":False}
+    token = get_zoom_token()
+    url = "https://api.zoom.us/v2/"
+    headers = {
+        'authorization': "Bearer "+token,
+        'content-type': "application/json"
+        }
+    params = {
+            "type": "upcoming",
+        }
+    res = requests.get(url + "users/" + ZOOM_USER_ID + "/meetings", headers=headers, params=params, )
+    if res.status_code != 200:
+        result["err_str"] = '一覧取得に失敗した。\n' + str(res.status_code) + res.text
+        return result
+    meetings = res.json().get("meetings")
+    if not meetings:
+        result["flg"] = True
+        result["msg"] = "削除する会議は無かった"
+        return result
+    for meeting in meetings:
+        res = requests.delete(url + 'meetings/' + str(meeting["id"]), headers=headers, )
+        if res.status_code != 204:
+            result["err_str"] = '削除に失敗した。\n' + str(res.status_code) + res.text
+            return result
+    result["flg"] = True
+    result["msg"] = "会議を削除した。"
+    return result
+
+
 @csrf_exempt
 def webhook(request):
     logger.debug(request.headers)
@@ -115,4 +148,12 @@ def handle_text_message(event):
                         "会議パスワード：" + str(data["password"])
         else:
             response_message = "会議作成に失敗したよ！"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+    if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
+        result = delete_meetings()
+        if result["flg"]:
+            data = json.loads(result["data"])
+            response_message = result["msg"]
+        else:
+            response_message = result["err_str"]
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
