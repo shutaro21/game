@@ -104,11 +104,15 @@ def handle_text_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
     if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
         result = create_meeting()
-        data = json.loads(result["data"])
-        response = "会議を作成しました\n" \
-					"会議タイトル：" + data["topic"] + "\n" \
-					"開始時刻：" + data["start_time"] + "\n" \
-					"時間：" + data["duration"] + "分\n" \
-					"参加URL：" + data["join_url"] + "\n" \
-					"会議ID：" + data["id"] + "\n" \
-					"会議パスワード：" + data["password"]
+        if result["flg"]:
+            data = json.loads(result["data"])
+            response_message = "会議を作成したよ！\n" \
+                        "会議タイトル：" + data["topic"] + "\n" \
+                        "開始時刻：" + data["start_time"] + "\n" \
+                        "時間：" + str(data["duration"]) + "分\n" \
+                        "参加URL：" + data["join_url"] + "\n" \
+                        "会議ID：" + str(data["id"]) + "\n" \
+                        "会議パスワード：" + str(data["password"])
+        else:
+            response_message = "会議作成に失敗したよ！"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
