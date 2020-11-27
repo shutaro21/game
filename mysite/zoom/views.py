@@ -19,6 +19,8 @@ import logging
 ZOOM_API_Key = settings.API_KEY
 ZOOM_API_Secret = settings.API_SECRET
 ZOOM_USER_ID = settings.USER_ID
+APPROVED_GROUPS = settings.APPROVED_GROUPS
+APPROVED_USERS = settings.APPROVED_USERS
 
 logger = logging.getLogger(__name__)
 handler = WebhookHandler(settings.CHANNEL_SECRET)
@@ -135,24 +137,25 @@ def webhook(request):
 def handle_text_message(event):
     if '人狼' in event.message.text:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
-    if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
-        result = create_meeting()
-        if result["flg"]:
-            data = json.loads(result["data"])
-            response_message = "会議を作成したよ！\n" \
-                        "会議タイトル：" + data["topic"] + "\n" \
-                        "開始時刻：" + data["start_time"] + "\n" \
-                        "時間：" + str(data["duration"]) + "分\n" \
-                        "参加URL：" + data["join_url"] + "\n" \
-                        "会議ID：" + str(data["id"]) + "\n" \
-                        "会議パスワード：" + str(data["password"])
-        else:
-            response_message = "会議作成に失敗したよ！"
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-    if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
-        result = delete_meetings()
-        if result["flg"]:
-            response_message = result["msg"]
-        else:
-            response_message = result["err_str"]
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+    if event.source.groupId in APPROVED_GROUPS or event.source.userId in APPROVED_USERS:
+        if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
+            result = create_meeting()
+            if result["flg"]:
+                data = json.loads(result["data"])
+                response_message = "会議を作成したよ！\n" \
+                            "会議タイトル：" + data["topic"] + "\n" \
+                            "開始時刻：" + data["start_time"] + "\n" \
+                            "時間：" + str(data["duration"]) + "分\n" \
+                            "参加URL：" + data["join_url"] + "\n" \
+                            "会議ID：" + str(data["id"]) + "\n" \
+                            "会議パスワード：" + str(data["password"])
+            else:
+                response_message = "会議作成に失敗したよ！"
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+        if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
+            result = delete_meetings()
+            if result["flg"]:
+                response_message = result["msg"]
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))

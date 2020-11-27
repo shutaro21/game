@@ -149,6 +149,8 @@ FORM_PASSWORD = config.get('zoom','FORM_PASSWORD')
 # line
 CHANNEL_ACCESS_TOKEN = config.get('line', 'CHANNEL_ACCESS_TOKEN')
 CHANNEL_SECRET = config.get('line', 'CHANNEL_SECRET')
+APPROVED_GROUPS = config.get('line', 'APPROVED_GROUPS').split('|')
+APPROVED_USERS = config.get('line', 'APPROVED_USERS').split('|')
 
 # ロギングの設定
 DJANGO_DB_LOGGER_ENABLE_FORMATTER = True
