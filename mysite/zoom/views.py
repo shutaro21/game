@@ -19,7 +19,9 @@ import logging
 ZOOM_API_Key = settings.API_KEY
 ZOOM_API_Secret = settings.API_SECRET
 ZOOM_USER_ID = settings.USER_ID
-APPROVED_IDS = settings.APPROVED_IDS
+APPROVED_USERS = settings.APPROVED_USERS
+APPROVED_GROUPS = settings.APPROVED_GROUPS
+APPROVED_ROOMS = settings.APPROVED_ROOMS
 
 logger = logging.getLogger(__name__)
 handler = WebhookHandler(settings.CHANNEL_SECRET)
@@ -136,7 +138,9 @@ def webhook(request):
 def handle_text_message(event):
     if '人狼' in event.message.text:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
-    if event.source.id in APPROVED_IDS:
+    if ((event.source.type == "user" and event.source.user_id in APPROVED_USERS) or
+         (event.source.type == "group" and event.source.group_id in APPROVED_GROUPS) or
+         (event.source.type == "room" and event.source.room_id in APPROVED_ROOMS)):
         if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
             result = create_meeting()
             if result["flg"]:
