@@ -220,7 +220,11 @@ def handle_text_message(event):
                 data = result["data"]
                 response_message = "予定されている会議一覧だよ！"
                 for meeting in data:
-                    response_message = response_message + "\n" + meeting["topic"] + "：" + meeting["start_time"] + "～" + meeting["end_time"]
+                    start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
+                    end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
+                    response_message = response_message + "\n" + meeting["topic"] + "：" \
+                        + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S") + "～" \
+                        + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S")
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
