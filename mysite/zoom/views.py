@@ -51,7 +51,7 @@ def get_zoom_token():
     token = (header+".".encode()+payload+".".encode()+signature).decode()  # トークンをstrで生成
     return token
 
-def create_meeting(topic=None):
+def create_meeting(topic=None, agenda=None):
     # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
     result = {"flg":False}
     token = get_zoom_token()
@@ -81,6 +81,7 @@ def create_meeting(topic=None):
         }
     data = {
             "topic": topic if topic else "人狼ボドゲ会",
+            "agenda": agenda if agenda else "-",
             "type": "2",
             "start_time": start_time.isoformat()[0:19],
             "timezone": "Asia/Tokyo",
@@ -109,7 +110,7 @@ def create_meeting(topic=None):
     result["data"] = json.dumps(context)
     return result
 
-def delete_meetings():
+def delete_meetings(source_id=None):
     result = {"flg":False}
     token = get_zoom_token()
     url = "https://api.zoom.us/v2/"
@@ -126,13 +127,24 @@ def delete_meetings():
         result["flg"] = True
         result["msg"] = "削除する会議は無かったよ！"
         return result
+    cnt_del = 0
     for meeting in meetings:
-        res = requests.delete(url + 'meetings/' + str(meeting["id"]), headers=headers, )
-        if res.status_code != 204:
-            result["err_str"] = '削除に失敗したよ！\n' + str(res.status_code) + res.text
+        res = requests.get(url + 'meetings/' + str(meeting["id"]), headers=headers, )
+        if res.status_code != 200:
+            result["err_str"] = '会議情報の取得に失敗したよ！\n' + str(res.status_code) + res.text
             return result
+        if not (source_id and res.json().get("agenda")!=source_id):
+            res = requests.delete(url + 'meetings/' + str(meeting["id"]), headers=headers, )
+            if res.status_code != 204:
+                result["err_str"] = '削除に失敗したよ！\n' + str(res.status_code) + res.text
+                return result
+            cnt_del += 1
+    if cnt_del == 0:
+        result["flg"] = True
+        result["msg"] = "削除する会議は無かったよ！"
+        return result
     result["flg"] = True
-    result["msg"] = "会議を削除したよ！"
+    result["msg"] = str(cnt_del) + "件の会議を削除したよ！"
     return result
 
 def get_meetings():
@@ -174,8 +186,14 @@ def handle_text_message(event):
     if (event.source.user_id in APPROVED_USERS or
         event.source.type == "group" and event.source.group_id in APPROVED_GROUPS or
         event.source.type == "room" and event.source.room_id in APPROVED_ROOMS):
+        if event.source.type == "group":
+            source_id = event.source.group_id
+        elif event.source.type == "room":
+            source_id = event.source.room_id
+        else:
+            source_id = event.source.user_id
         if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
-            result = create_meeting(re.search(r'「(.+)」',event.message.text))
+            result = create_meeting(re.search(r'「(.+)」',event.message.text, source_id))
             if result["flg"]:
                 data = json.loads(result["data"])
                 response_message = "会議を作成したよ！\n" \
@@ -189,7 +207,7 @@ def handle_text_message(event):
                 response_message = "会議作成に失敗したよ！"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
         if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
-            result = delete_meetings()
+            result = delete_meetings(source_id) if '全部' in event.message.text else delete_meetings()
             if result["flg"]:
                 response_message = result["msg"]
             else:
