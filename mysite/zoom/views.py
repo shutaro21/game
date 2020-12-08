@@ -218,8 +218,9 @@ def handle_text_message(event):
             result = get_meetings()
             if result["flg"]:
                 data = result["data"]
-                response_message = "予定されている会議一覧だよ！\n" \
-                            + data["topic"] + "：" + data["start_time"] + "～" + data["end_time"] + "\n"
+                response_message = "予定されている会議一覧だよ！"
+                for meeting in data:
+                    response_message = response_message + "\n" + meeting["topic"] + "：" + meeting["start_time"] + "～" + meeting["end_time"]
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
