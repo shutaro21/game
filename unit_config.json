@@ -31,6 +31,14 @@
 	"routes":[
 		{
 			"match":{
+				"host":"wiki.shutaro.jp"
+			},
+			"action":{
+				"proxy":"http://172.17.0.1:3000"
+			}
+		},
+		{
+			"match":{
 				"uri":"/static/*"
 			},
 			"action":{

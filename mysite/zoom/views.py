@@ -15,6 +15,7 @@ import hashlib
 import requests
 import math
 import logging
+import re
 
 ZOOM_API_Key = settings.API_KEY
 ZOOM_API_Secret = settings.API_SECRET
@@ -50,14 +51,28 @@ def get_zoom_token():
     token = (header+".".encode()+payload+".".encode()+signature).decode()  # トークンをstrで生成
     return token
 
-def create_meeting():
+def create_meeting(topic=None):
     # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
     result = {"flg":False}
     token = get_zoom_token()
 
-    start_time = timezone.localtime(timezone.now())
-    tomorrow = start_time + datetime.timedelta(days=1)
-    end_time = datetime.datetime(tomorrow.year,tomorrow.month,tomorrow.day,3,00,00,tzinfo=start_time.tzinfo)
+    current_time = timezone.localtime(timezone.now())
+    tomorrow = current_time + datetime.timedelta(days=1)
+    start_time = datetime.datetime(current_time.year,current_time.month,current_time.day,current_time.hour,current_time.minute,00,tzinfo=current_time.tzinfo)
+    end_time = datetime.datetime(tomorrow.year,tomorrow.month,tomorrow.day,3,00,00,tzinfo=current_time.tzinfo)
+
+    res = get_meetings()
+    if not res["flg"]:
+        result["err_str"] = res["err_str"]
+        return result
+    existing_meetings = res["data"]
+    if existing_meetings:
+        for meeting in existing_meetings:
+            e_start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
+            e_end_time = e_start_time + datetime.timedelta(minutes=meeting["duration"])
+            if (start_time < e_end_time and end_time > e_start_time):
+                result["err_str"] = '時間が重複した会議があるよ！'
+                return result
 
     url = "https://api.zoom.us/v2/"
     headers = {
@@ -65,7 +80,7 @@ def create_meeting():
         'content-type': "application/json"
         }
     data = {
-            "topic": "人狼ボドゲ会",
+            "topic": topic if topic else "人狼ボドゲ会",
             "type": "2",
             "start_time": start_time.isoformat()[0:19],
             "timezone": "Asia/Tokyo",
@@ -80,10 +95,12 @@ def create_meeting():
     if res.status_code != 201:
         result["err_str"] = str(res.status_code) + res.text
         return HttpResponse(json.dumps(result))
+    start_time = datetime.datetime.fromisoformat(res.json()["start_time"].replace('Z', '+00:00'))
+    end_time = start_time + datetime.timedelta(minutes=data["duration"])
     context = {
         "topic": res.json()["topic"],
-        "start_time": timezone.localtime(datetime.datetime.fromisoformat(res.json()["start_time"].replace('Z', '+00:00'))).strftime("%Y/%m/%d %H:%M:%S"),
-        "duration": res.json()["duration"],
+        "start_time": timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S"),
+        "end_time": timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S"),
         "join_url": res.json()["join_url"],
         "id": res.json()["id"],
         "password": res.json()["password"],
@@ -100,14 +117,11 @@ def delete_meetings():
         'authorization': "Bearer "+token,
         'content-type': "application/json"
         }
-    params = {
-            "type": "upcoming",
-        }
-    res = requests.get(url + "users/" + ZOOM_USER_ID + "/meetings", headers=headers, params=params, )
-    if res.status_code != 200:
-        result["err_str"] = '一覧取得に失敗したよ！。\n' + str(res.status_code) + res.text
+    res = get_meetings()
+    if not res["flg"]:
+        result["err_str"] = res["err_str"]
         return result
-    meetings = res.json().get("meetings")
+    meetings = res["data"]
     if not meetings:
         result["flg"] = True
         result["msg"] = "削除する会議は無かったよ！"
@@ -121,6 +135,25 @@ def delete_meetings():
     result["msg"] = "会議を削除したよ！"
     return result
 
+def get_meetings():
+    result = {"flg":False}
+    token = get_zoom_token()
+    url = "https://api.zoom.us/v2/"
+    headers = {
+        'authorization': "Bearer "+token,
+        'content-type': "application/json"
+        }
+    params = {
+            "type": "upcoming",
+        }
+    res = requests.get(url + "users/" + ZOOM_USER_ID + "/meetings", headers=headers, params=params, )
+    if res.status_code != 200:
+        result["err_str"] = '一覧取得に失敗したよ！。\n' + str(res.status_code) + res.text
+        return result
+    meetings = res.json().get("meetings")
+    result["flg"] = True
+    result["data"] = meetings
+    return result
 
 @csrf_exempt
 def webhook(request):
@@ -142,13 +175,13 @@ def handle_text_message(event):
         event.source.type == "group" and event.source.group_id in APPROVED_GROUPS or
         event.source.type == "room" and event.source.room_id in APPROVED_ROOMS):
         if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
-            result = create_meeting()
+            result = create_meeting(re.search(r'「(.+)」',event.message.text))
             if result["flg"]:
                 data = json.loads(result["data"])
                 response_message = "会議を作成したよ！\n" \
                             "会議タイトル：" + data["topic"] + "\n" \
                             "開始時刻：" + data["start_time"] + "\n" \
-                            "時間：" + str(data["duration"]) + "分\n" \
+                            "終了時刻：" + data["end_time"] + "\n" \
                             "参加URL：" + data["join_url"] + "\n" \
                             "会議ID：" + str(data["id"]) + "\n" \
                             "会議パスワード：" + str(data["password"])
@@ -159,6 +192,15 @@ def handle_text_message(event):
             result = delete_meetings()
             if result["flg"]:
                 response_message = result["msg"]
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+        if 'モブ' in event.message.text and '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
+            result = get_meetings()
+            if result["flg"]:
+                data = json.loads(result["data"])
+                response_message = "予定されている会議一覧だよ！\n" \
+                            + data["topic"] + "：" + data["start_time"] + "～" + data["end_time"] + "\n"
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
