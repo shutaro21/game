@@ -133,8 +133,6 @@ def delete_meetings(source_id=None):
         if res.status_code != 200:
             result["err_str"] = '会議情報の取得に失敗したよ！\n' + str(res.status_code) + res.text
             return result
-        logger.debug(source_id)
-        logger.debug(res.json().get("agenda"))
         if not (source_id and res.json().get("agenda")!=source_id):
             res = requests.delete(url + 'meetings/' + str(meeting["id"]), headers=headers, )
             if res.status_code != 204:
@@ -210,7 +208,7 @@ def handle_text_message(event):
                 response_message = "会議作成に失敗したよ！"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
         if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
-            result = delete_meetings(source_id) if '全部' in event.message.text else delete_meetings()
+            result = delete_meetings() if '全部' in event.message.text else delete_meetings(source_id)
             if result["flg"]:
                 response_message = result["msg"]
             else:
@@ -220,13 +218,16 @@ def handle_text_message(event):
             result = get_meetings()
             if result["flg"]:
                 data = result["data"]
-                response_message = "予定されている会議一覧だよ！"
-                for meeting in data:
-                    start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
-                    end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
-                    response_message = response_message + "\n" + meeting["topic"] + "：" \
-                        + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S") + "～" \
-                        + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S")
+                if result["data"]:
+                    response_message = "予定されている会議一覧だよ！"
+                    for meeting in data:
+                        start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
+                        end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
+                        response_message = response_message + "\n" + meeting["topic"] + "：" \
+                            + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S") + "～" \
+                            + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S")
+                else:
+                    response_message = "予定されている会議は無いよ！"
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
