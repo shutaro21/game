@@ -205,7 +205,7 @@ def handle_text_message(event):
                             "会議ID：" + str(data["id"]) + "\n" \
                             "会議パスワード：" + str(data["password"])
             else:
-                response_message = "会議作成に失敗したよ！"
+                response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
         if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
             result = delete_meetings() if '全部' in event.message.text else delete_meetings(source_id)
