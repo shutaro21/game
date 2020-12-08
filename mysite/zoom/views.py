@@ -193,7 +193,8 @@ def handle_text_message(event):
         else:
             source_id = event.source.user_id
         if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
-            result = create_meeting(re.search(r'「(.+)」',event.message.text), source_id)
+            topic = re.search(r'「(.+)」',event.message.text).get(1) if re.search(r'「(.+)」',event.message.text) else None
+            result = create_meeting(topic, source_id)
             if result["flg"]:
                 data = json.loads(result["data"])
                 response_message = "会議を作成したよ！\n" \
