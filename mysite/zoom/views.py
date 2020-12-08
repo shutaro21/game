@@ -133,6 +133,8 @@ def delete_meetings(source_id=None):
         if res.status_code != 200:
             result["err_str"] = '会議情報の取得に失敗したよ！\n' + str(res.status_code) + res.text
             return result
+        logger.debug(source_id)
+        logger.debug(res.json().get("agenda"))
         if not (source_id and res.json().get("agenda")!=source_id):
             res = requests.delete(url + 'meetings/' + str(meeting["id"]), headers=headers, )
             if res.status_code != 204:
