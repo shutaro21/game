@@ -249,12 +249,12 @@ def handle_text_message(event):
                 re_from_h = re.search(r'(\d+)時から',event.message.text)
                 re_to_h = re.search(r'(\d+)時まで',event.message.text)
                 if re_from_d:
-                    fd = re_from_d.groups()[0]
-                    fh = re_from_d.groups()[1]
+                    fd = int(re_from_d.groups()[0])
+                    fh = int(re_from_d.groups()[1])
                 elif re_from_h:
-                    fh = re_from_h.groups()[0]
+                    fh = int(re_from_h.groups()[0])
                 if re_to_h:
-                    th = re_to_h.groups()[0]
+                    th = int(re_to_h.groups()[0])
                 result = create_meeting(topic, fd, fh, th, source_id)
                 if result["flg"]:
                     data = json.loads(result["data"])
