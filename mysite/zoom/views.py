@@ -262,4 +262,10 @@ def handle_text_message(event):
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
         conv = re.search(r'モブ.*、(.+)',event.message.text)
         if conv:
-            conv.group(1)
+            result = post_chaplus(conv.group(1))
+            if result["flg"]:
+                response_message = result["response"]
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            
