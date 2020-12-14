@@ -268,14 +268,14 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-            if '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
+            elif '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
                 result = delete_meetings() if '全部' in event.message.text else delete_meetings(source_id)
                 if result["flg"]:
                     response_message = result["msg"]
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-            if '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
+            elif '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
                 result = get_meetings()
                 if result["flg"]:
                     data = result["data"]
@@ -284,20 +284,20 @@ def handle_text_message(event):
                         for meeting in data:
                             start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
                             end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
-                            response_message = response_message + "\n" + meeting["topic"] + "：" \
-                                + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S") + "～" \
-                                + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S")
+                            response_message = response_message + "\n" \
+                                + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M") + "～" \
+                                + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M") + "「" \
+                                + meeting["topic"] + "」"
                     else:
                         response_message = "予定されている会議は無いよ！"
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-        conv = re.search(r'モブ.*、(.+)',event.message.text)
-        if conv:
-            result = post_chaplus(conv.group(1))
-            if result["flg"]:
-                response_message = result["response"]
-            else:
-                response_message = result["err_str"]
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            elif re.search(r'モブ.*、(.+)',event.message.text):
+                result = post_chaplus(re.search(r'モブ.*、(.+)',event.message.text).group(1))
+                if result["flg"]:
+                    response_message = result["response"]
+                else:
+                    response_message = result["err_str"]
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
             
