@@ -153,6 +153,9 @@ APPROVED_USERS = config.get('line', 'APPROVED_USERS').split('|')
 APPROVED_GROUPS = config.get('line', 'APPROVED_GROUPS').split('|')
 APPROVED_ROOMS = config.get('line', 'APPROVED_ROOMS').split('|')
 
+# Chaplus
+CHAPLUS_API_KEY = config.get('Chaplus', 'API_KEY')
+
 # ロギングの設定
 DJANGO_DB_LOGGER_ENABLE_FORMATTER = True
 LOGGING = {

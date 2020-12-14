@@ -167,6 +167,34 @@ def get_meetings():
     result["data"] = meetings
     return result
 
+def post_chaplus(message):
+    result = {"flg":False}
+    url = "https://www.chaplus.jp/v1/chat"
+    headers = {
+        'content-type': "application/json"
+        }
+    params = {
+            "apikey": settings.CHAPLUS_API_KEY,
+        }
+    data = {
+            "utterance": message,
+            "username": "あなた",
+            "agentState": {
+                "agentName": "モブ爺",
+                "tone": "normal",
+                "age": "80",
+            },
+        }
+    res = requests.post(url, headers=headers, params=params, data=json.dumps(data), )
+    if res.status_code != 200:
+        result["err_str"] = '会話取得に失敗しました。\n' + str(res.status_code) + res.text
+        return result
+    response = res.json().get("bestResponse").get("utterance")
+    result["flg"] = True
+    result["response"] = response
+    return result
+
+
 @csrf_exempt
 def webhook(request):
     logger.debug(request.headers)
@@ -192,42 +220,52 @@ def handle_text_message(event):
             source_id = event.source.room_id
         else:
             source_id = event.source.user_id
-        if 'モブ' in event.message.text and '会議' in event.message.text and '作' in event.message.text:
-            topic = re.search(r'「(.+)」',event.message.text).group(1) if re.search(r'「(.+)」',event.message.text) else None
-            result = create_meeting(topic, source_id)
-            if result["flg"]:
-                data = json.loads(result["data"])
-                response_message = "会議を作成したよ！\n" \
-                            "会議タイトル：" + data["topic"] + "\n" \
-                            "開始時刻：" + data["start_time"] + "\n" \
-                            "終了時刻：" + data["end_time"] + "\n" \
-                            "参加URL：" + data["join_url"] + "\n" \
-                            "会議ID：" + str(data["id"]) + "\n" \
-                            "会議パスワード：" + str(data["password"])
-            else:
-                response_message = result["err_str"]
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-        if 'モブ' in event.message.text and '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
-            result = delete_meetings() if '全部' in event.message.text else delete_meetings(source_id)
-            if result["flg"]:
-                response_message = result["msg"]
-            else:
-                response_message = result["err_str"]
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-        if 'モブ' in event.message.text and '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
-            result = get_meetings()
-            if result["flg"]:
-                data = result["data"]
-                if result["data"]:
-                    response_message = "予定されている会議一覧だよ！"
-                    for meeting in data:
-                        start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
-                        end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
-                        response_message = response_message + "\n" + meeting["topic"] + "：" \
-                            + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S") + "～" \
-                            + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S")
+        if 'モブ' in event.message.text:
+            if '会議' in event.message.text and '作' in event.message.text:
+                topic = re.search(r'「(.+)」',event.message.text).group(1) if re.search(r'「(.+)」',event.message.text) else None
+                result = create_meeting(topic, source_id)
+                if result["flg"]:
+                    data = json.loads(result["data"])
+                    response_message = "会議を作成したよ！\n" \
+                                "会議タイトル：" + data["topic"] + "\n" \
+                                "開始時刻：" + data["start_time"] + "\n" \
+                                "終了時刻：" + data["end_time"] + "\n" \
+                                "参加URL：" + data["join_url"] + "\n" \
+                                "会議ID：" + str(data["id"]) + "\n" \
+                                "会議パスワード：" + str(data["password"])
                 else:
-                    response_message = "予定されている会議は無いよ！"
+                    response_message = result["err_str"]
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            if '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
+                result = delete_meetings() if '全部' in event.message.text else delete_meetings(source_id)
+                if result["flg"]:
+                    response_message = result["msg"]
+                else:
+                    response_message = result["err_str"]
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            if '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
+                result = get_meetings()
+                if result["flg"]:
+                    data = result["data"]
+                    if result["data"]:
+                        response_message = "予定されている会議一覧だよ！"
+                        for meeting in data:
+                            start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
+                            end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
+                            response_message = response_message + "\n" + meeting["topic"] + "：" \
+                                + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M:%S") + "～" \
+                                + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M:%S")
+                    else:
+                        response_message = "予定されている会議は無いよ！"
+                else:
+                    response_message = result["err_str"]
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+        conv = re.search(r'モブ.*、(.+)',event.message.text)
+        if conv:
+            result = post_chaplus(conv.group(1))
+            if result["flg"]:
+                response_message = result["response"]
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            
