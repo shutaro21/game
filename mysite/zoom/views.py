@@ -51,15 +51,35 @@ def get_zoom_token():
     token = (header+".".encode()+payload+".".encode()+signature).decode()  # トークンをstrで生成
     return token
 
-def create_meeting(topic=None, agenda=None):
+def create_meeting(topic=None, fd=None, fh=None, th=None, agenda=None):
     # 参考：https://qiita.com/nanbuwks/items/ed74a76a0f294c0bf4ed
     result = {"flg":False}
     token = get_zoom_token()
 
     current_time = timezone.localtime(timezone.now())
-    tomorrow = current_time + datetime.timedelta(days=1)
-    start_time = datetime.datetime(current_time.year,current_time.month,current_time.day,current_time.hour,current_time.minute,00,tzinfo=current_time.tzinfo)
-    end_time = datetime.datetime(tomorrow.year,tomorrow.month,tomorrow.day,3,00,00,tzinfo=current_time.tzinfo)
+    start_y = current_time.year
+    start_m = current_time.month
+    start_d = current_time.day
+    start_h = current_time.hour
+    start_mi = current_time.minute
+    if fh:
+        start_h = fh
+        start_mi = 0
+        if fd:
+            start_d = fd
+            if fd < current_time.day:
+                if current_time.month == 12:
+                    start_y = current_time.year + 1
+                    start_m = 1
+                else:
+                    start_m = current_time.month + 1
+    start_time = datetime.datetime(start_y,start_m,start_d,start_h,start_mi,00,tzinfo=current_time.tzinfo)
+    tomorrow = start_time + datetime.timedelta(days=1)
+    end_h = th if th else 3
+    if end_h < start_h:
+        end_time = datetime.datetime(tomorrow.year,tomorrow.month,tomorrow.day,end_h,00,00,tzinfo=current_time.tzinfo)
+    else:
+        end_time = datetime.datetime(start_time.year,start_time.month,start_time.day,end_h,00,00,tzinfo=current_time.tzinfo)
 
     res = get_meetings()
     if not res["flg"]:
@@ -189,6 +209,7 @@ def post_chaplus(message):
     if res.status_code != 200:
         result["err_str"] = '会話取得に失敗しました。\n' + str(res.status_code) + res.text
         return result
+    logger.debug(res.json())
     response = res.json().get("bestResponse").get("utterance")
     result["flg"] = True
     result["response"] = response
@@ -223,7 +244,18 @@ def handle_text_message(event):
         if 'モブ' in event.message.text:
             if '会議' in event.message.text and '作' in event.message.text:
                 topic = re.search(r'「(.+)」',event.message.text).group(1) if re.search(r'「(.+)」',event.message.text) else None
-                result = create_meeting(topic, source_id)
+                fd, fh, td, th = None, None, None, None
+                re_from_d = re.search(r'(\d+)日(\d+)時から',event.message.text)
+                re_from_h = re.search(r'(\d+)時から',event.message.text)
+                re_to_h = re.search(r'(\d+)時まで',event.message.text)
+                if re_from_d:
+                    fd = re_from_d.groups()[0]
+                    fh = re_from_d.groups()[1]
+                elif re_from_h:
+                    fh = re_from_h.groups()[0]
+                if re_to_h:
+                    th = re_to_h.groups()[0]
+                result = create_meeting(topic, fd, fh, th, source_id)
                 if result["flg"]:
                     data = json.loads(result["data"])
                     response_message = "会議を作成したよ！\n" \
