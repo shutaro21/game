@@ -16,6 +16,7 @@ import requests
 import math
 import logging
 import re
+import random
 
 ZOOM_API_Key = settings.API_KEY
 ZOOM_API_Secret = settings.API_SECRET
@@ -210,9 +211,14 @@ def post_chaplus(message):
         result["err_str"] = '会話取得に失敗しました。\n' + str(res.status_code) + res.text
         return result
     logger.debug(res.json())
-    response = res.json().get("bestResponse").get("utterance")
+    responses = res.json().get("responses")
+    utterances, scores = [], []
+    for response in responses:
+        utterances.append(response.get("utterance"))
+        scores.append(response.get("score"))
+    random_response = random.choices(utterances, weights=scores)
     result["flg"] = True
-    result["response"] = response
+    result["response"] = random_response
     return result
 
 
