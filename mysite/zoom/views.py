@@ -272,6 +272,7 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+                return
             elif '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
                 result = delete_meetings() if (event.source.user_id in APPROVED_USERS and '全部' in event.message.text) else delete_meetings(source_id)
                 if result["flg"]:
@@ -279,6 +280,7 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+                return
             elif '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
                 result = get_meetings()
                 if result["flg"]:
@@ -297,6 +299,7 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+                return
             elif re.search(r'モブ.*、(.+)',event.message.text):
                 result = post_chaplus(re.search(r'モブ.*、(.+)',event.message.text).group(1))
                 if result["flg"]:
@@ -304,6 +307,7 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-    elif '人狼' in event.message.text:
+                return
+    if '人狼' in event.message.text:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
-            
+        return
