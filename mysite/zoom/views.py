@@ -216,7 +216,7 @@ def post_chaplus(message):
     for response in responses:
         utterances.append(response.get("utterance"))
         scores.append(response.get("score"))
-    random_response = random.choices(utterances, weights=scores)
+    random_response = random.choices(utterances, weights=scores)[0]
     result["flg"] = True
     result["response"] = random_response
     return result
@@ -304,6 +304,6 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-    if '人狼' in event.message.text:
+    elif '人狼' in event.message.text:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
             
