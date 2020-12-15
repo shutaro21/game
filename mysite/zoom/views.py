@@ -230,8 +230,6 @@ def webhook(request):
     
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
-    if '人狼' in event.message.text:
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
     if (event.source.user_id in APPROVED_USERS or
         event.source.type == "group" and event.source.group_id in APPROVED_GROUPS or
         event.source.type == "room" and event.source.room_id in APPROVED_ROOMS):
@@ -300,4 +298,6 @@ def handle_text_message(event):
                 else:
                     response_message = result["err_str"]
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+    if '人狼' in event.message.text:
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
             
