@@ -309,7 +309,7 @@ def handle_text_message(event):
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
         return
     if re.search(r'モブ爺',nrm_message):
-        result = post_chaplus(nrm_message)
+        result = post_chaplus(re.sub('モブ爺','あなた',nrm_message))
         if result["flg"]:
             response_message = result["response"]
         else:
