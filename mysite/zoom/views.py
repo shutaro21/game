@@ -236,6 +236,7 @@ def webhook(request):
     
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
+    nrm_message = re.sub('(モブ|もぶ)(じ[いぃー]+|爺[いぃー]*)*','モブ爺',event.message.text)
     if (event.source.user_id in APPROVED_USERS or
         event.source.type == "group" and event.source.group_id in APPROVED_GROUPS or
         event.source.type == "room" and event.source.room_id in APPROVED_ROOMS):
@@ -245,69 +246,76 @@ def handle_text_message(event):
             source_id = event.source.room_id
         else:
             source_id = event.source.user_id
-        if 'モブ' in event.message.text:
-            if '会議' in event.message.text and '作' in event.message.text:
-                topic = re.search(r'「(.+)」',event.message.text).group(1) if re.search(r'「(.+)」',event.message.text) else None
-                fd, fh, td, th = None, None, None, None
-                re_from_d = re.search(r'(\d+)日(\d+)時から',event.message.text)
-                re_from_h = re.search(r'(\d+)時から',event.message.text)
-                re_to_h = re.search(r'(\d+)時まで',event.message.text)
-                if re_from_d:
-                    fd = int(re_from_d.groups()[0])
-                    fh = int(re_from_d.groups()[1])
-                elif re_from_h:
-                    fh = int(re_from_h.groups()[0])
-                if re_to_h:
-                    th = int(re_to_h.groups()[0])
-                result = create_meeting(topic, fd, fh, th, source_id)
-                if result["flg"]:
-                    data = json.loads(result["data"])
-                    response_message = "会議を作成したよ！\n" \
-                                "会議タイトル：" + data["topic"] + "\n" \
-                                "開始時刻：" + data["start_time"] + "\n" \
-                                "終了時刻：" + data["end_time"] + "\n" \
-                                "参加URL：" + data["join_url"] + "\n" \
-                                "会議ID：" + str(data["id"]) + "\n" \
-                                "会議パスワード：" + str(data["password"])
+        if 'モブ' in nrm_message and '会議' in nrm_message and '作' in nrm_message:
+            topic = re.search(r'「(.+)」',nrm_message).group(1) if re.search(r'「(.+)」',nrm_message) else None
+            fd, fh, td, th = None, None, None, None
+            re_from_d = re.search(r'(\d+)日(\d+)時から',nrm_message)
+            re_from_h = re.search(r'(\d+)時から',nrm_message)
+            re_to_h = re.search(r'(\d+)時まで',nrm_message)
+            if re_from_d:
+                fd = int(re_from_d.groups()[0])
+                fh = int(re_from_d.groups()[1])
+            elif re_from_h:
+                fh = int(re_from_h.groups()[0])
+            if re_to_h:
+                th = int(re_to_h.groups()[0])
+            result = create_meeting(topic, fd, fh, th, source_id)
+            if result["flg"]:
+                data = json.loads(result["data"])
+                response_message = "会議を作成したよ！\n" \
+                            "会議タイトル：" + data["topic"] + "\n" \
+                            "開始時刻：" + data["start_time"] + "\n" \
+                            "終了時刻：" + data["end_time"] + "\n" \
+                            "参加URL：" + data["join_url"] + "\n" \
+                            "会議ID：" + str(data["id"]) + "\n" \
+                            "会議パスワード：" + str(data["password"])
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            return
+        elif 'モブ' in nrm_message and '会議' in nrm_message and ('削' in nrm_message or '消' in nrm_message):
+            result = delete_meetings() if (event.source.user_id in APPROVED_USERS and '全部' in nrm_message) else delete_meetings(source_id)
+            if result["flg"]:
+                response_message = result["msg"]
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            return
+        elif 'モブ' in nrm_message and '会議' in nrm_message and ('教えて' in nrm_message or '一覧' in nrm_message or '予定' in nrm_message):
+            result = get_meetings()
+            if result["flg"]:
+                data = result["data"]
+                if result["data"]:
+                    response_message = "予定されている会議一覧だよ！"
+                    for meeting in data:
+                        start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
+                        end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
+                        response_message = response_message + "\n" \
+                            + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M") + "～" \
+                            + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M") + "「" \
+                            + meeting["topic"] + "」"
                 else:
-                    response_message = result["err_str"]
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-                return
-            elif '会議' in event.message.text and ('削' in event.message.text or '消' in event.message.text):
-                result = delete_meetings() if (event.source.user_id in APPROVED_USERS and '全部' in event.message.text) else delete_meetings(source_id)
-                if result["flg"]:
-                    response_message = result["msg"]
-                else:
-                    response_message = result["err_str"]
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-                return
-            elif '会議' in event.message.text and ('教えて' in event.message.text or '一覧' in event.message.text or '予定' in event.message.text):
-                result = get_meetings()
-                if result["flg"]:
-                    data = result["data"]
-                    if result["data"]:
-                        response_message = "予定されている会議一覧だよ！"
-                        for meeting in data:
-                            start_time = datetime.datetime.fromisoformat(meeting["start_time"].replace('Z', '+00:00'))
-                            end_time = start_time + datetime.timedelta(minutes=meeting["duration"])
-                            response_message = response_message + "\n" \
-                                + timezone.localtime(start_time).strftime("%Y/%m/%d %H:%M") + "～" \
-                                + timezone.localtime(end_time).strftime("%Y/%m/%d %H:%M") + "「" \
-                                + meeting["topic"] + "」"
-                    else:
-                        response_message = "予定されている会議は無いよ！"
-                else:
-                    response_message = result["err_str"]
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-                return
-            elif re.search(r'モブ.*、(.+)',event.message.text):
-                result = post_chaplus(re.search(r'モブ.*、(.+)',event.message.text).group(1))
-                if result["flg"]:
-                    response_message = result["response"]
-                else:
-                    response_message = result["err_str"]
-                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
-                return
-    if '人狼' in event.message.text:
+                    response_message = "予定されている会議は無いよ！"
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            return
+    if re.search(r'モブ.*、(.+)',nrm_message):
+        result = post_chaplus(re.search(r'モブ.*、(.+)',nrm_message).group(1))
+        if result["flg"]:
+            response_message = result["response"]
+        else:
+            response_message = result["err_str"]
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+        return
+    if re.search(r'モブ爺',nrm_message):
+        result = post_chaplus(nrm_message)
+        if result["flg"]:
+            response_message = result["response"]
+        else:
+            response_message = result["err_str"]
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+        return
+    if '人狼' in nrm_message:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text='ハッハッハ！\nただのウワサ話だよ。\n人狼なんているわけないさ！'))
         return
