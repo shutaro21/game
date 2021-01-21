@@ -39,6 +39,14 @@
 		},
 		{
 			"match":{
+				"host":"n8n.shutaro.jp"
+			},
+			"action":{
+				"proxy":"http://172.17.0.1:5678"
+			}
+		},
+		{
+			"match":{
 				"uri":"/static/*"
 			},
 			"action":{
