@@ -321,6 +321,8 @@ def webhook(request):
                     user_id=dict_body.get("payload").get("object").get("participant").get("user_id"),
                     flg=1,
                 ).first()
+                participant.flg=2
+                participant.leave_time=timezone.now()
                 participant.save()
             return HttpResponse('OK', status=200)
     return HttpResponse('NG', status=200)
