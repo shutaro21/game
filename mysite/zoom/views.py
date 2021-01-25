@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from zoom.models import Participant
 import json
 import base64
 import time, datetime
@@ -20,6 +21,7 @@ import random
 
 ZOOM_API_Key = settings.API_KEY
 ZOOM_API_Secret = settings.API_SECRET
+ZOOM_WEBHOOK_TOKEN = settings.WEBHOOK_TOKEN
 ZOOM_USER_ID = settings.USER_ID
 APPROVED_USERS = settings.APPROVED_USERS
 APPROVED_GROUPS = settings.APPROVED_GROUPS
@@ -188,6 +190,75 @@ def get_meetings():
     result["data"] = meetings
     return result
 
+def get_live_meeting(source_id=None):
+    result = {"flg":False}
+    token = get_zoom_token()
+    url = "https://api.zoom.us/v2/"
+    headers = {
+        'authorization': "Bearer "+token,
+        'content-type': "application/json"
+        }
+    params = {
+            "type": "live",
+        }
+    res = requests.get(url + "users/" + ZOOM_USER_ID + "/meetings", headers=headers, params=params, )
+    if res.status_code != 200:
+        result["err_str"] = '一覧取得に失敗したよ！。\n' + str(res.status_code) + res.text
+        return result
+    meetings = res.json().get("meetings")
+    if len(meetings) == 0:
+        result["err_str"] = '開催中の会議はなかったよ！'
+        return result
+    if len(meetings) != 1:
+        result["err_str"] = '開催中の会議数がおかしいよ！'
+        return result
+    if source_id:
+        res = requests.get(url + 'meetings/' + str(meetings[0]["id"]), headers=headers, )
+        if res.status_code != 200:
+            result["err_str"] = '開催中の会議詳細取得に失敗したよ！\n' + str(res.status_code) + res.text
+            return result
+        if res.json().get("agenda") != source_id:
+            result["err_str"] = '開催中の会議は違うグループのものだよ！\n' + str(res.status_code) + res.text
+            return result
+    result["flg"] = True
+    result["data"] = meetings[0]
+    return result
+
+def get_participants(source_id=None):
+    result = {"flg":False}
+    res = get_live_meeting(source_id)
+    if not res["flg"]:
+        return res
+    participants = Participant.objects.filter(
+        meeting_id=res["data"]["id"], 
+        flg=1,
+    )
+    result["flg"] = True
+    result["data"] = [p.user_name for p in participants]
+    return result
+
+def devide_teams(c_team, source_id=None):
+    result = {"flg":False}
+    res = get_participants(source_id)
+    if not res["flg"]:
+        return res
+    participants = res["data"]
+    min_c_mem = len(participants) // c_team
+    rem_c_mem = len(participants) - min_c_mem * c_team
+    cons = [min_c_mem] * c_team
+    for i in range(0, rem_c_mem):
+        cons[i] += 1
+    random.shuffle(cons)
+    random.shuffle(participants)
+    teams = []
+    s = 0
+    for c_mem in cons:
+        teams.append(participants[s:s+c_mem])
+        s=s+c_mem
+    result["flg"] = True
+    result["data"] = teams
+    return result
+ 
 def post_chaplus(message):
     result = {"flg":False}
     url = "https://www.chaplus.jp/v1/chat"
@@ -221,19 +292,39 @@ def post_chaplus(message):
     result["response"] = random_response
     return result
 
-
 @csrf_exempt
 def webhook(request):
     logger.debug(request.headers)
     logger.debug(request.body.decode('utf-8'))
     body = request.body.decode('utf-8')
-    try:
-        signature = request.META['HTTP_X_LINE_SIGNATURE']
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        HttpResponseForbidden()
-    return HttpResponse('OK', status=200)
-    
+    if request.headers.get("X-Line-Signature"):
+        try:
+            signature = request.META['HTTP_X_LINE_SIGNATURE']
+            handler.handle(body, signature)
+        except InvalidSignatureError:
+            HttpResponseForbidden()
+        return HttpResponse('OK', status=200)
+    if request.headers.get("X-Zm-Trackingid"):
+        if request.headers.get("Authorization") == ZOOM_WEBHOOK_TOKEN:
+            dict_body = json.loads(body)
+            if dict_body.get("event") == "meeting.participant_joined":
+                participant = Participant(
+                    meeting_id=dict_body.get("payload").get("object").get("id"), 
+                    user_id=dict_body.get("payload").get("object").get("participant").get("user_id"),
+                    user_name=dict_body.get("payload").get("object").get("participant").get("user_name"),
+                    flg=1,
+                )
+                participant.save()
+            elif dict_body.get("event") == "meeting.participant_left":
+                participant = Participant.objects.filter(
+                    meeting_id=dict_body.get("payload").get("object").get("id"), 
+                    user_id=dict_body.get("payload").get("object").get("participant").get("user_id"),
+                    flg=1,
+                ).first()
+                participant.save()
+            return HttpResponse('OK', status=200)
+    return HttpResponse('NG', status=200)
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_text_message(event):
     nrm_message = re.sub('(モブ|もぶ)(じ[いぃー]+|爺[いぃー]*)*','モブ爺',event.message.text)
@@ -296,6 +387,19 @@ def handle_text_message(event):
                             + meeting["topic"] + "」"
                 else:
                     response_message = "予定されている会議は無いよ！"
+            else:
+                response_message = result["err_str"]
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
+            return
+        elif 'モブ' in nrm_message and 'チーム' in nrm_message and ('分け' in nrm_message or 'わけ' in nrm_message):
+            c_team = re.search(r'(\d+)',nrm_message)
+            if c_team:
+                c_team = 2
+            result = devide_teams(c_team, source_id)
+            if result["flg"]:
+                response_message = "チーム分けしたよ！"
+                for i, team in enumerate(result["data"]):
+                    response_message += "\n" + "チーム" + str(i) + "：" + "、".join(team)
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
