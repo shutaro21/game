@@ -395,7 +395,7 @@ def handle_text_message(event):
             c_team = re.search(r'(\d+)',nrm_message)
             if not c_team:
                 c_team = 2
-            result = devide_teams(c_team, source_id)
+            result = devide_teams(int(c_team), source_id)
             if result["flg"]:
                 response_message = "チーム分けしたよ！"
                 for i, team in enumerate(result["data"]):
