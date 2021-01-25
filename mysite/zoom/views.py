@@ -393,7 +393,7 @@ def handle_text_message(event):
             return
         elif 'モブ' in nrm_message and 'チーム' in nrm_message and ('分け' in nrm_message or 'わけ' in nrm_message):
             c_team = re.search(r'(\d+)',nrm_message)
-            if c_team:
+            if not c_team:
                 c_team = 2
             result = devide_teams(c_team, source_id)
             if result["flg"]:
