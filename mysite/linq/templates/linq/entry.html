@@ -3,6 +3,11 @@
 	<script>
 		$(function(){
 			check_entry();
+			$('[id^="anchor_"]').on('click', 'a', function(){
+				if(!confirm($(this).parent().prev('td').text() + 'で再入場します。よろしいでしょうか？')){
+					return false;
+				}
+			})
 		})
 		function check_entry(){
 			$.getJSON('/linq/{{ game.id }}/check_entry', function(res){
@@ -41,7 +46,7 @@
 	{% for i in player_cnt %}
 		<tr>
 		<td id="name_{{ forloop.counter }}"></td>
-		<td id="anchor_{{ forloop.counter }}"></td>
+		<td id="anchor_{{ forloop.counter }}" style="padding:15px 20px;"></td>
 		</tr>
 	{% endfor %}
 </table>
