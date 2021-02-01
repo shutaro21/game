@@ -217,8 +217,8 @@ def get_live_meeting(source_id=None):
         if res.status_code != 200:
             result["err_str"] = '開催中の会議詳細取得に失敗したよ！\n' + str(res.status_code) + res.text
             return result
-        if res.json().get("agenda") != source_id:
-            result["err_str"] = '開催中の会議は違うグループのものだよ！\n' + str(res.status_code) + res.text
+        if not (source_id in APPROVED_USERS) and res.json().get("agenda") != source_id:
+            result["err_str"] = '開催中の会議は違うグループのものだよ！'
             return result
     result["flg"] = True
     result["data"] = meetings[0]
@@ -403,7 +403,7 @@ def handle_text_message(event):
             if result["flg"]:
                 response_message = "チーム分けしたよ！"
                 for i, team in enumerate(result["data"]):
-                    response_message += "\n" + "チーム" + str(i) + "：" + "、".join(team)
+                    response_message += "\n" + "チーム" + str(i + 1) + "：" + "、".join(team)
             else:
                 response_message = result["err_str"]
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=response_message))
