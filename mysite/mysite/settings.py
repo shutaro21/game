@@ -223,6 +223,11 @@ LOGGING = {
             'propagate': False,
         },
         #自身のプロジェクトの設定を追加
+        'linq': {
+            'handlers': ['console','database'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'zoom': {
             'handlers': ['console','database'],
             'level': 'DEBUG',

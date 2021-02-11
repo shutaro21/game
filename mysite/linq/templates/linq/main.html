@@ -23,12 +23,15 @@ $(function(){
 			return false;
 		}
 	    player1 = $('input[name="poll_check"]:checked')[0].value;
-	    player2 = $('input[name="poll_check"]:checked')[1].value;
+		player2 = $('input[name="poll_check"]:checked')[1].value;
+		$(this).prop("disabled",true);
 		$.getJSON('/linq/{{ player.id }}/{{ round_no }}/poll', {'player1':player1,'player2':player2}, function(res){
 			$('input[name="poll_check"]:checked').each(function() {
 				$(this).prop('checked', false);
 			})
 			check_result();
+		}).always(function(){
+			$(this).prop("disabled",false);
 		})
 	})
 })
