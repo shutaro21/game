@@ -4,6 +4,9 @@ from django.urls import reverse
 from django.db.models import Sum, Max
 from .models import Game, Player, Round, Word
 import json, random
+import logging
+
+logger = logging.getLogger(__name__)
 
 # インデックス画面
 def index(request):
@@ -45,6 +48,7 @@ def entry_player(request, game_id):
         game = game, 
         name = request.POST['player_name'], 
         score = game.start_score,
+        calc_round = 0,
     )
     # 参加人数が設定人数に達した場合はラウンド１を作成する。
     if game.player_set.count() == game.player_cnt:
@@ -199,6 +203,7 @@ def poll(request, player_id, round_no):
     round.save()
     # 投票２が済んだ人数が設定人数に達した場合は点数計算を行う。
     if Round.objects.filter(game__id=round.game.id, round_no=round_no).exclude(poll21__isnull=True).count() == round.game.player_cnt:
+        logger.debug('calc_score:' + str(player_id))
         calc_score(round.game.id, round.round_no)
     return HttpResponse(json.dumps({'flg':1}))
 
@@ -304,9 +309,12 @@ def calc_score(game_id, round_no):
         # 被NG的中は＋１
         r.score = r.score + r.be_ng_hit
         r.save()
-        # プレイヤーの合計スコア更新
-        r.player.score = r.player.score + r.score
-        r.player.save()
+        # 重複処理回避
+        if r.player.calc_round < round_no:
+            # プレイヤーの合計スコア更新
+            r.player.score = r.player.score + r.score
+            r.player.calc_round = round_no
+            r.player.save()
     # プレイヤーの最大スコアが終了スコアに達していなければ次のラウンドデータを作成する。
     if Player.objects.filter(game__id=game_id).aggregate(Max('score'))['score__max'] < Game.objects.get(pk=game_id).end_score:
         make_round(game_id, round_no + 1)
@@ -335,12 +343,14 @@ def make_round(game_id, round_no):
     player_word = player_word + ['？'] * game.solo_cnt
     # シャッフルする
     random.shuffle(player_word)
-    # 各プレイヤーごとにラウンドデータを作成する
-    for p in game.player_set.all():
-        round = Round.objects.create(
-            game = game,
-            player = p,
-            round_no = round_no,
-            order = order.pop(),
-            word = player_word.pop(),
-        )
+    # 重複処理回避
+    if Round.objects.filter(game = game, round_no = round_no).count() == 0:
+        # 各プレイヤーごとにラウンドデータを作成する
+        for p in game.player_set.all():
+            round = Round.objects.create(
+                game = game,
+                player = p,
+                round_no = round_no,
+                order = order.pop(),
+                word = player_word.pop(),
+            )

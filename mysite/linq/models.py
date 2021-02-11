@@ -10,6 +10,7 @@ class Player(models.Model):
     game = models.ForeignKey('Game', on_delete=models.CASCADE)
     name = models.CharField('プレイヤー名', max_length=50)
     score = models.IntegerField('スコア')
+    calc_round = models.IntegerField('計算済みラウンド')
 
 class Word(models.Model):
     word = models.CharField('単語', max_length=100)
