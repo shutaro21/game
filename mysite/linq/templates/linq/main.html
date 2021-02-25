@@ -113,6 +113,9 @@ function check_result(){
 <div id="poll_area">
 	<button id="poll" type="submit">投票</button>
 </div>
+{% if round_no > 1 %}
+	<br><a href="/linq/{{ player.id }}/{{ round_no|add:'-1' }}/result">前のラウンド</a>
+{% endif %}
 <input id="poll11" type="hidden" value=""></input>
 <input id="poll12" type="hidden" value=""></input>
 {% endblock %}
