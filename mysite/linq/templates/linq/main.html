@@ -8,9 +8,12 @@ $(function(){
 			alert("ヒントはひらがなで入力してください。");
 			return false;
 		}
+		$(this).prop("disabled",true);
 		$.getJSON('/linq/{{ player.id }}/{{ round_no }}/hint', {'hint':$('#hint_text').val()}, function(res){
 			$('#hint_text').val("");
 			check_result();
+		}).always(function(){
+			$(this).prop("disabled",false);
 		})
 	})
 	$('#poll').on('click',function(e){

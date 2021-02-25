@@ -36,3 +36,11 @@ class Round(models.Model):
     ng_hit = models.IntegerField('NG的中', null=True, default=0)
     be_other_hit = models.IntegerField('被他ペア的中', null=True, default=0)
     be_ng_hit = models.IntegerField('被NG的中', null=True, default=0)
+
+    def total_score(self):
+        got_score = Round.objects.filter(
+            game_id = self.game_id,
+            player_id = self.player_id,
+            round_no__lte = self.round_no
+        ).aggregate(got_score = models.Sum('score'))['got_score']
+        return self.game.start_score + got_score
