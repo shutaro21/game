@@ -2,22 +2,32 @@
 {% block content %}
 プレイヤー名：{{ round.player.name }}<br>
 スコア：{{ round.player.score }}<br>
+ラウンド：{{ round_no }}<br>
 お題：{{ round.word }}<br>
-<table>
-<tr><th>No.</th><th>名前</th><th>合計スコア</th><th>お題</th><th>ヒント１</th><th>ヒント２</th><th>投票１</th><th>投票２</th><th>今回スコア</th></tr>
-{% for r in round_all %}
-	<tr>
-	<td id="no_{{ forloop.counter }}">{{ r.order }}</td>
-	<td id="name_{{ forloop.counter }}">{{ r.player.name }}</td>
-	<td id="score_{{ forloop.counter }}">{{ r.player.score }}</td>
-	<td id="score_{{ forloop.counter }}">{{ r.word }}</td>
-	<td id="hint1_{{ forloop.counter }}">{{ r.hint1 }}</td>
-	<td id="hint2_{{ forloop.counter }}">{{ r.hint2 }}</td>
-	<td id="poll1_{{ forloop.counter }}" class=poll_{{ r.poll1_result }}>{{ r.poll11.player.name }}－{{ r.poll12.player.name }}</td>
-	<td id="poll2_{{ forloop.counter }}" class=poll_{{ r.poll2_result }}>{{ r.poll21.player.name }}－{{ r.poll22.player.name }}</td>
-	<td id="score_{{ forloop.counter }}">{{ r.score }}</td>
-	</tr>
-{% endfor %}
-</table>
-<a href="/linq/{{ round.player.id }}/{{ round_no|add:'1' }}/main">次のラウンド</a>
+{% if round.score %}
+	<table>
+	<tr><th>No.</th><th>名前</th><th>合計スコア</th><th>お題</th><th>ヒント１</th><th>ヒント２</th><th>投票１</th><th>投票２</th><th>今回スコア</th></tr>
+	{% for r in round_all %}
+		<tr>
+		<td id="no_{{ forloop.counter }}">{{ r.order }}</td>
+		<td id="name_{{ forloop.counter }}">{{ r.player.name }}</td>
+		<td id="score_{{ forloop.counter }}">{{ r.total_score }}</td>
+		<td id="score_{{ forloop.counter }}">{{ r.word }}</td>
+		<td id="hint1_{{ forloop.counter }}">{{ r.hint1 }}</td>
+		<td id="hint2_{{ forloop.counter }}">{{ r.hint2 }}</td>
+		<td id="poll1_{{ forloop.counter }}" class=poll_{{ r.poll1_result }}>{{ r.poll11.player.name }}－{{ r.poll12.player.name }}</td>
+		<td id="poll2_{{ forloop.counter }}" class=poll_{{ r.poll2_result }}>{{ r.poll21.player.name }}－{{ r.poll22.player.name }}</td>
+		<td id="score_{{ forloop.counter }}">{{ r.score }}</td>
+		</tr>
+	{% endfor %}
+	</table>
+	{% if round_no > 1 %}
+		<a href="/linq/{{ round.player.id }}/{{ round_no|add:'-1' }}/result">前のラウンド</a>
+	{% endif %}
+	{% if next_round %}
+		<a href="/linq/{{ round.player.id }}/{{ round_no|add:'1' }}/main">次のラウンド</a>
+	{% endif %}
+{% else %}
+	まだラウンドが完了していません
+{% endif %}
 {% endblock %}

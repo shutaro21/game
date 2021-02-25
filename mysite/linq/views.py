@@ -213,7 +213,9 @@ def result(request, player_id, round_no):
     round = Round.objects.filter(player__id=player_id, round_no=round_no).first()
     # 全員分のラウンドデータ取得
     round_all = Round.objects.filter(game=round.game, round_no=round_no).order_by('order')
-    return render(request, 'linq/result.html', {'round': round, 'round_no':round_no, 'round_all':round_all })
+    # 次のラウンド存在確認
+    next_round = Round.objects.filter(player__id=player_id, round_no=round_no + 1).first()
+    return render(request, 'linq/result.html', {'round': round, 'round_no':round_no, 'round_all':round_all, 'next_round':next_round })
 
 # 点数計算処理
 def calc_score(game_id, round_no):
@@ -227,7 +229,7 @@ def calc_score(game_id, round_no):
         hit_data[r.id] = {'poll1_result':0,'poll2_result':0,'self_hit':False,'other_hit':0,'ng_hit':0,'be_other_hit':0,'be_ng_hit':0}
     # ペアプレイヤーをDBに登録
     for r in round_all:
-        pair_player = Round.objects.filter(game__id=game_id, round_no=round_no, word=r.word).exclude(player=r.player).first()
+        pair_player = Round.objects.filter(game__id=game_id, round_no=round_no, word=r.word).exclude(player=r.player).exclude(word='？').first()
         # いればペアプレイヤーを設定（無い人もいる）
         if pair_player:
             r.pair_player = pair_player
@@ -242,7 +244,7 @@ def calc_score(game_id, round_no):
         word21 = words[r.poll21.id]
         word22 = words[r.poll22.id]
         # 投票１があっていて
-        if word11 == word12:
+        if word11 == word12 and not word11 == '？':
             # 自分の分なら自ペア的中フラグを立てる
             if r in [r.poll11, r.poll12]:
                 hit_data[r.id]['self_hit'] = True
@@ -254,7 +256,7 @@ def calc_score(game_id, round_no):
                 hit_data[r.poll11.id]['be_other_hit'] += 1
                 hit_data[r.poll12.id]['be_other_hit'] += 1
         # 投票２があっていて
-        if word21 == word22:
+        if word21 == word22 and not word21 == '？':
             # 自分の分なら自ペア的中フラグを立てる
             if r in [r.poll21, r.poll22]:
                 hit_data[r.id]['self_hit'] = True
