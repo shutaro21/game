@@ -9,7 +9,7 @@ def cons(request):
 
 def save_template(request):
     result = {'flg':False}
-    template = Template(name=request.GET["name"], cons=request.GET["cons"], )
+    template = Template(name=request.GET["name"], cons=request.GET["cons"], count=request.GET["count"])
     template.save()
     result['flg'] = True
     return HttpResponse(json.dumps(result))
@@ -23,6 +23,7 @@ def get_template(request):
             "id": template.id,
             "name": template.name,
             "constitution": json.loads(template.cons),
+            "count": template.count,
         })
     result['template'] = json.dumps(res_template)
     result['flg'] = True

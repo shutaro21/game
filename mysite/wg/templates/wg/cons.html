@@ -107,6 +107,7 @@ var position = {
 	"yaku"  :{"name":"疫病神",          "group":"other",  "count":0, "url":"https://help.sorairo.jp/werewolf-judgment/01_04.html#10", "description":"人知れず災難を引き寄せる疫病神。<br>通常の役職に追加されて、疫病神となる。<br>疫病神となったプレイヤーは、自分が疫病神とは気づかず、処刑時に投票しても票が入らなくなる。<br>市長やギャンブラーなどに疫病神がつき、２票以上投票できる場合は１票減ってしまう。"},
 };
 var template = [];
+var count;
 $(function(){
 	for (group_id in group){
 		$("#input_area").append(
@@ -215,6 +216,7 @@ $(function(){
 		context = {}
 		context["name"] = $('#template_name').val();
 		context["cons"] = template_json;
+		context["count"] = count;
 		$.getJSON('./save_template', context, function(res){
 			if(res['flg']){
 				alert("保存しました。");
@@ -281,7 +283,7 @@ function template_list(){
 				$("#template_select").append(
 					$('<option>')
 						.attr('value',i)
-						.append(template[i].name + "（" + template[i].constitution.length + "人）：" + consListStr)
+						.append(template[i].name + "（" + (template[i].count || template[i].constitution.length) + "人）：" + consListStr)
 				)
 			}
 		}else{
