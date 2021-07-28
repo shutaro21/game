@@ -9,11 +9,12 @@ def graph(request):
     td = (datetime.datetime.now() - datetime.datetime.strptime(settings.KABU_BASEDATE,"%Y/%m/%d")).days
     td += 60
     urls = []
+    headers={"User-Agent":""}
     for brand in brands.values():
         urls.append("https://query1.finance.yahoo.com/v8/finance/chart/" + str(brand) + ".T?range=" + str(td) + "d&interval=1d")
     res = []
     for url in urls:
-        res.append(requests.get(url).json())
+        res.append(requests.get(url, headers=headers).json())
     data = []
     for i, timestamp in enumerate(res[0]["chart"]["result"][0]["timestamp"]):
         d = {}

@@ -241,5 +241,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+        'kabu': {
+            'handlers': ['console','database'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     }
 }
