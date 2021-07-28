@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 import logging
 import configparser
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -50,6 +51,7 @@ INSTALLED_APPS = [
     'linq.apps.LinqConfig',
     'wg.apps.WgConfig',
     'zoom.apps.ZoomConfig',
+    'kabu.apps.KabuConfig',
 ]
 
 MIDDLEWARE = [
@@ -159,6 +161,12 @@ APPROVED_ROOMS = config.get('line', 'APPROVED_ROOMS').split('|')
 
 # Chaplus
 CHAPLUS_API_KEY = config.get('Chaplus', 'API_KEY')
+
+# kabu
+KABU_BRANDS = json.loads(config.get('kabu', 'BRANDS'))
+KABU_BASEDATE = config.get('kabu', 'BASEDATE')
+KABU_BASEVALUE = config.get('kabu', 'BASEVALUE')
+KABU_URL = config.get('kabu', 'URL')
 
 # ロギングの設定
 DJANGO_DB_LOGGER_ENABLE_FORMATTER = True
