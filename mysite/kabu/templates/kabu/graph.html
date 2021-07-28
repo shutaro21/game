@@ -1,0 +1,95 @@
+<!-- Styles -->
+<style>
+	#chartdiv {
+	  width: 100%;
+	  height: 500px;
+	}
+	
+	</style>
+	
+	<!-- Resources -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+	<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+	<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+	
+	<!-- Chart code -->
+	<script>
+	var chart;
+	var data = JSON.parse('{{ data | safe }}');
+	am4core.ready(function() {
+	
+	// Themes begin
+	am4core.useTheme(am4themes_animated);
+	// Themes end
+	
+	// create chart
+	chart = am4core.create("chartdiv", am4charts.XYChart);
+	chart.data = data;
+	
+	// {# X軸設定 #}
+	var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+	dateAxis.dateFormats.setKey("day", "yyyy/MM/dd");
+	chart.dateFormatter.dateFormat = "yyyy/MM/dd";
+	chart.dateFormatter.inputDateFormat = "yyyy/MM/dd";
+	// {# Y軸設定 #}
+	var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+	valueAxis.title.text = "価格";
+	valueAxis.renderer.opposite = true;
+	valueAxis.title.rotation = -90;
+	
+	// {# データ系列設定 #}
+	{% for brand in brands %}
+	var series{{ forloop.counter }} = chart.series.push(new am4charts.LineSeries());
+	series{{ forloop.counter }}.name = "{{ brand }}";
+	series{{ forloop.counter }}.dataFields.valueY = "close{{ forloop.counter }}";
+	series{{ forloop.counter }}.dataFields.dateX = "timestamp";
+	series{{ forloop.counter }}.yAxis = valueAxis;
+	series{{ forloop.counter }}.tooltipText = "{{ brand }} : {valueY}";
+	series{{ forloop.counter }}.tooltip.pointerOrientation = "vertical";
+	series{{ forloop.counter }}.fill = chart.colors.getIndex({{ forloop.counter }});
+	series{{ forloop.counter }}.stroke = chart.colors.getIndex({{ forloop.counter }});
+	series{{ forloop.counter }}.strokeWidth = 2;
+	{% endfor %}
+	var seriesX = chart.series.push(new am4charts.LineSeries());
+	seriesX.name = "合計";
+	seriesX.dataFields.valueY = "closeX";
+	seriesX.dataFields.dateX = "timestamp";
+	seriesX.yAxis = valueAxis;
+	seriesX.tooltipText = "合計 : {valueY}";
+	seriesX.tooltip.pointerOrientation = "vertical";
+	seriesX.fill = chart.colors.getIndex(0);
+	seriesX.stroke = chart.colors.getIndex(0);
+	seriesX.strokeWidth = 2;
+// {# カーソル設定 #}
+	chart.cursor = new am4charts.XYCursor();
+	chart.cursor.xAxis = dateAxis;
+	// {# 凡例設定 #}
+	chart.legend = new am4charts.Legend();
+	// {# スクロールバー設定 #}
+	chart.scrollbarX = new am4core.Scrollbar();
+	
+	var range1 = dateAxis.axisRanges.create();
+	range1.date = new Date("{{ basedate }}");
+	range1.grid.stroke = chart.colors.getIndex(7);
+	range1.grid.strokeOpacity = 0.6;
+	range1.grid.strokeDasharray = "5,2";
+	//range1.label.text = "Motorcycle fee introduced";
+	//range1.label.inside = true;
+	//range1.label.rotation = 90;
+	//range1.label.horizontalCenter = "right";
+	//range1.label.verticalCenter = "bottom";
+	var range2 = valueAxis.axisRanges.create();
+	range2.value = {{ basevalue }};
+	range2.grid.stroke = chart.colors.getIndex(3);
+	range2.grid.strokeOpacity = 0.6;
+	range2.grid.strokeDasharray = "5,2";
+	//range2.label.text = "Motorcycle fee introduced";
+	//range2.label.inside = true;
+	//range2.label.horizontalCenter = "right";
+	//range2.label.verticalCenter = "bottom";
+	})
+	</script>
+	
+	<!-- HTML -->
+	<div id="chartdiv"></div>

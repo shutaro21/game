@@ -21,4 +21,5 @@ urlpatterns = [
     path('linq/', include('linq.urls')),
     path('wg/', include('wg.urls')),
     path('zoom/', include('zoom.urls')),
+    path('kabu/', include('kabu.urls')),
 ]
