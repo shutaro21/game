@@ -25,7 +25,17 @@ docker-compose up -d
 snap install core; snap refresh core
 snap install --classic certbot
 ln -s /snap/bin/certbot /usr/bin/certbot
+
 --WEBサーバ停止
+cd /home/shutaro21
+docker-compose down
 certbot certonly --standalone
+game.shutaro.jp,n8n.shutaro.jp,wiki.shutaro.jp
 cd /etc/letsencrypt/live/game.shutaro.jp
 cat cert.pem chain.pem privkey.pem > /home/shutaro21/bundle.pem
+
+cd /home/shutaro21/state
+rm * -fr
+cd ..
+docker-compose build
+docker-compose up -d

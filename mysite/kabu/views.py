@@ -21,8 +21,11 @@ def graph(request):
         d["timestamp"] = datetime.datetime.fromtimestamp(timestamp, datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y/%m/%d")
         d["closeX"] = 0
         for j, r in enumerate(res):
+            if(not r["chart"]["result"][0]["indicators"]["quote"][0]["close"][i]):
+                break
             d["close" + str(j+1)] = r["chart"]["result"][0]["indicators"]["quote"][0]["close"][i] * 100
             d["closeX"] += r["chart"]["result"][0]["indicators"]["quote"][0]["close"][i] * 100
-        data.append(d)
+        else:
+            data.append(d)
 
     return render(request, 'kabu/graph.html', {"brands":brands.keys,"data":json.dumps(data),"basedate":settings.KABU_BASEDATE,"basevalue":settings.KABU_BASEVALUE,})
